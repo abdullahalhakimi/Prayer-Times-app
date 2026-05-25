@@ -2,6 +2,7 @@ package com.example
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,7 +23,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -41,14 +45,12 @@ import com.example.ui.screens.HijriScreen
 import com.example.ui.screens.PrayersScreen
 import com.example.ui.screens.QiblaScreen
 import com.example.ui.screens.SettingsScreen
-import com.example.ui.theme.AmberAccent
-import com.example.ui.theme.DeepTeal
-import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.theme.ActivePrayerBg
 import com.example.ui.theme.BorderColor
+import com.example.ui.theme.DeepTeal
 import com.example.ui.theme.InactiveTextColor
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
+import com.example.ui.theme.MyApplicationTheme
+import android.graphics.Color as AndroidColor
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     object Prayers : Screen("prayers", "Prayers", Icons.Default.AccessTime)
@@ -61,7 +63,15 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(
+                DeepTeal.toArgb()
+            ),
+            navigationBarStyle = SystemBarStyle.light(
+                AndroidColor.TRANSPARENT,
+                AndroidColor.TRANSPARENT
+            )
+        )
         setContent {
             MyApplicationTheme {
                 MainAppContainer()
@@ -150,7 +160,7 @@ fun MainAppContainer() {
         NavHost(
             navController = navController,
             startDestination = Screen.Prayers.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
         ) {
             composable(Screen.Prayers.route) {
                 PrayersScreen(viewModel = viewModel)
