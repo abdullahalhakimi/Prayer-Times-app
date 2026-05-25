@@ -94,8 +94,8 @@ fun PrayersScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1.8f)
-                .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+                .weight(1.2f)
+                .clip(shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(DeepTeal, Color(0xFF132F2F))
@@ -103,24 +103,25 @@ fun PrayersScreen(
                 )
                 .statusBarsPadding()
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 24.dp)
+                .padding(bottom = 24.dp),
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.SpaceBetween,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Spacer(modifier = Modifier.height(5.dp))
                 // Location header
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    horizontalArrangement = Arrangement.Start,
                 ) {
                     Icon(
                         imageVector = Icons.Default.LocationOn,
                         contentDescription = "Location",
                         tint = AmberAccent,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
@@ -128,7 +129,7 @@ fun PrayersScreen(
                         color = Color.White,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = 2.sp
+                        letterSpacing = 2.sp,
                     )
                 }
 
@@ -255,7 +256,7 @@ fun PrayerTimeItemRow(
     prayer: PrayerTimeItem,
     notificationType: NotificationType,
     isActive: Boolean,
-    onToggleNotification: () -> Unit
+    onToggleNotification: () -> Unit,
 ) {
     Card(
         colors = CardDefaults.cardColors(
@@ -276,7 +277,7 @@ fun PrayerTimeItemRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+                .padding(horizontal = 15.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -319,24 +320,6 @@ fun PrayerTimeItemRow(
                                     letterSpacing = 0.5.sp
                                 )
                             }
-                        }
-                    }
-                    // Display category labels or sun/prayer descriptions
-                    if (prayer.name == "Sunrise") {
-                        Text("Shuruq", color = if (isActive) DeepTeal.copy(alpha = 0.7f) else Color.Gray, fontSize = 11.sp)
-                    } else if (prayer.name == "Qiyam") {
-                        Text("Last third of night", color = if (isActive) DeepTeal.copy(alpha = 0.7f) else Color.Gray, fontSize = 11.sp)
-                    } else {
-                        val desc = when(prayer.name) {
-                            "Fajr" -> "Dawn Prayer"
-                            "Dhuhr" -> "Noon Prayer"
-                            "Asr" -> "Afternoon Prayer"
-                            "Maghrib" -> "Sunset Prayer"
-                            "Isha" -> "Night Prayer"
-                            else -> null
-                        }
-                        if (desc != null) {
-                            Text(desc, color = if (isActive) DeepTeal.copy(alpha = 0.7f) else Color.Gray, fontSize = 11.sp)
                         }
                     }
                 }
