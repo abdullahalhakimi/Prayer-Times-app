@@ -1,0 +1,6 @@
+{
+  "name": "Prayer Times",
+  "description": "An elegant, minimal Material 3 application featuring precise prayer calculation times, Qibla compass tracker, Hijri calendar events, agenda reminders, and multi-location management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,102 @@
+package com.example.data
+
+import com.batoulapps.adhan.Coordinates
+import com.batoulapps.adhan.CalculationMethod
+import com.batoulapps.adhan.Madhab
+import com.batoulapps.adhan.PrayerTimes
+import com.batoulapps.adhan.data.DateComponents
+import java.util.Calendar
+import java.util.Date
+
+enum class PrayerCalculationMethod(val displayName: String, val method: CalculationMethod) {
+    UMM_AL_QURA("Umm Al-Qura", CalculationMethod.UMM_AL_QURA),
+    MUSLIM_WORLD_LEAGUE("Muslim World League", CalculationMethod.MUSLIM_WORLD_LEAGUE),
+    EGYPTIAN("Egyptian General Authority", CalculationMethod.EGYPTIAN),
+    KARACHI("Univ. of Islamic Sciences, Karachi", CalculationMethod.KARACHI),
+    NORTH_AMERICA("ISNA (North America)", CalculationMethod.NORTH_AMERICA),
+    MOONSIGHTING_COMMITTEE("Moonsighting Committee", CalculationMethod.MOONSIGHTING_COMMITTEE),
+    KUWAIT("Kuwait", CalculationMethod.KUWAIT),
+    QATAR("Qatar", CalculationMethod.QATAR),
+    SINGAPORE("Singapore", CalculationMethod.SINGAPORE),
+    TURKEY("Turkey", CalculationMethod.TURKEY)
+}
+
+enum class PrayerMadhab(val displayName: String, val madhab: Madhab) {
+    STANDARD("Shafi, Maliki, Hanbali (Standard)", Madhab.SHAFI),
+    HANAFI("Hanafi", Madhab.HANAFI)
+}
+
+data class PrayerTimeItem(
+    val name: String,
+    val date: Date,
+    val formattedTime: String
+)
+
+object PrayerTimesCalculator {
+
+    /**
+     * Calculates prayer times for a specific coordinates, calculation method, madhab, and date.
+     */
+    fun calculateTimes(
+        latitude: Double,
+        longitude: Double,
+        method: CalculationMethod,
+        madhab: Madhab,
+        date: Date = Date()
+    ): List<PrayerTimeItem> {
+        val coordinates = Coordinates(latitude, longitude)
+        val calendar = Calendar.getInstance().apply { time = date }
+        
+        val dateComponents = DateComponents(
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH) + 1, // DateComponents month is 1-based, Calendar.MONTH is 0-based
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+
+        val parameters = method.parameters.apply {
+            this.madhab = madhab
+        }
+
+        val prayerTimes = PrayerTimes(coordinates, dateComponents, parameters)
+        
+        // Calculate Qiyam (traditionally last 1/3 of the night, or halfway between sunset/Maghrib and Fajr of the next day)
+        // Here we'll do halfway between Maghrib and Fajr of next day, or simplified to 11:30 PM / calculated relative to midnight
+        val maghribTime = prayerTimes.maghrib()
+        val fajrTime = prayerTimes.fajr()
+        
+        val qiyamTime = if (maghribTime != null && fajrTime != null) {
+            // Halfway or default
+            val calMaghrib = Calendar.getInstance().apply { time = maghribTime }
+            val calFajr = Calendar.getInstance().apply { time = fajrTime }
+            // Fajr is next day, so add 1 day if necessary
+            if (calFajr.before(calMaghrib)) {
+                calFajr.add(Calendar.DATE, 1)
+            }
+            val diff = calFajr.timeInMillis - calMaghrib.timeInMillis
+            val qiyamMillis = calMaghrib.timeInMillis + (diff * 2 / 3) // last third of night starts
+            Date(qiyamMillis)
+        } else {
+            // Fallback qiyam is 11:45 PM of current day
+            val fallback = Calendar.getInstance().apply {
+                time = date
+                set(Calendar.HOUR_OF_DAY, 23)
+                set(Calendar.MINUTE, 45)
+                set(Calendar.SECOND, 0)
+            }
+            fallback.time
+        }
+
+        val df = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault())
+
+        val list = mutableListOf<PrayerTimeItem>()
+        prayerTimes.fajr()?.let { list.add(PrayerTimeItem("Fajr", it, df.format(it))) }
+        prayerTimes.sunrise()?.let { list.add(PrayerTimeItem("Sunrise", it, df.format(it))) }
+        prayerTimes.dhuhr()?.let { list.add(PrayerTimeItem("Dhuhr", it, df.format(it))) }
+        prayerTimes.asr()?.let { list.add(PrayerTimeItem("Asr", it, df.format(it))) }
+        prayerTimes.maghrib()?.let { list.add(PrayerTimeItem("Maghrib", it, df.format(it))) }
+        prayerTimes.isha()?.let { list.add(PrayerTimeItem("Isha", it, df.format(it))) }
+        list.add(PrayerTimeItem("Qiyam", qiyamTime, df.format(qiyamTime)))
+
+        return list
+    }
+}
