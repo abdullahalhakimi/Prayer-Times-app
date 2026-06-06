@@ -2,22 +2,29 @@ package com.example.ui
 
 import android.app.Application
 import android.content.Context
+import android.location.Geocoder
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.batoulapps.adhan.CalculationMethod
 import com.batoulapps.adhan.Madhab
 import com.example.data.*
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
 import java.time.chrono.HijrahDate
 import java.time.temporal.ChronoField
 import java.util.*
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 
 enum class NotificationType(val label: String) {
     SILENT("Silent"),
@@ -85,26 +92,36 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
     private val _islamicEvents = MutableStateFlow<List<EventReminder>>(emptyList())
     val islamicEvents: StateFlow<List<EventReminder>> = _islamicEvents
 
+    private val moshi = Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()
+    private val locationListAdapter = moshi.adapter<List<LocationConfig>>(
+        Types.newParameterizedType(List::class.java, LocationConfig::class.java)
+    )
+
     private var tickerJob: Job? = null
 
     init {
-        // Pre-populate location preferences saved states
-        val sharedPrefs = application.getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
-        val savedLoc = sharedPrefs.getString("saved_location", "City of London") ?: "City of London"
-        
-        if (savedLoc == "Makkah") {
-            setToMakkah()
-        } else if (savedLoc == "Medina") {
-            setToMedina()
-        } else {
-            setToLondon()
-        }
-
-        // Initialize lists
+        // Initialize lists first to have available locations
         initLocations()
         initReminders()
         initEvents()
         initNotificationStates()
+
+        // Pre-populate location preferences saved states
+        val sharedPrefs = application.getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
+        val savedLocName = sharedPrefs.getString("saved_location", "City of London") ?: "City of London"
+        
+        val savedConfig = _locationsList.value.find { it.name == savedLocName }
+        if (savedConfig != null) {
+            selectLocationAndSync(savedConfig)
+        } else {
+            // Fallback to first available or London if empty
+            val fallback = _locationsList.value.firstOrNull()
+            if (fallback != null) {
+                selectLocationAndSync(fallback)
+            } else {
+                setToLondon()
+            }
+        }
 
         // Start real-time countdown updates
         startTicker()
@@ -123,6 +140,21 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     private fun initLocations() {
+        val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
+        val savedLocationsJson = sharedPrefs.getString("locations_list_json", null)
+        
+        if (savedLocationsJson != null) {
+            try {
+                _locationsList.value = locationListAdapter.fromJson(savedLocationsJson) ?: emptyList()
+            } catch (e: Exception) {
+                loadDefaultLocations()
+            }
+        } else {
+            loadDefaultLocations()
+        }
+    }
+
+    private fun loadDefaultLocations() {
         _locationsList.value = listOf(
             LocationConfig("london", "City of London", 51.5074, -0.1278, CalculationMethod.MOONSIGHTING_COMMITTEE, Madhab.SHAFI),
             LocationConfig("makkah", "Makkah", 21.4225, 39.8262, CalculationMethod.UMM_AL_QURA, Madhab.SHAFI),
@@ -130,6 +162,60 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
             LocationConfig("cairo", "Cairo", 30.0444, 31.2357, CalculationMethod.EGYPTIAN, Madhab.SHAFI),
             LocationConfig("newyork", "New York", 40.7128, -74.0060, CalculationMethod.NORTH_AMERICA, Madhab.SHAFI)
         )
+        saveLocations()
+    }
+
+    private fun saveLocations() {
+        val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
+        val json = locationListAdapter.toJson(_locationsList.value)
+        sharedPrefs.edit().putString("locations_list_json", json).apply()
+    }
+
+    fun addLocation(name: String, lat: Double, lon: Double, method: CalculationMethod, madhab: Madhab) {
+        val newConfig = LocationConfig(
+            id = UUID.randomUUID().toString(),
+            name = name,
+            latitude = lat,
+            longitude = lon,
+            method = method,
+            madhab = madhab
+        )
+        _locationsList.value = _locationsList.value + newConfig
+        saveLocations()
+    }
+
+    fun deleteLocation(id: String) {
+        // Prevent deleting currently selected location if possible, or handle it
+        _locationsList.value = _locationsList.value.filter { it.id != id }
+        saveLocations()
+    }
+
+    fun addLocationFromGps(onComplete: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication<Application>())
+                val location = fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
+                
+                if (location != null) {
+                    val geocoder = Geocoder(getApplication(), Locale.getDefault())
+                    val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                    val cityName = addresses?.firstOrNull()?.locality ?: "Current Location"
+                    
+                    addLocation(
+                        name = cityName,
+                        lat = location.latitude,
+                        lon = location.longitude,
+                        method = CalculationMethod.MOONSIGHTING_COMMITTEE, // Default
+                        madhab = Madhab.SHAFI
+                    )
+                    onComplete(true)
+                } else {
+                    onComplete(false)
+                }
+            } catch (e: Exception) {
+                onComplete(false)
+            }
+        }
     }
 
     private fun initReminders() {

@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -42,6 +43,7 @@ import com.example.ui.CompassViewModel
 import com.example.ui.PrayerTimesViewModel
 import com.example.ui.screens.AgendaScreen
 import com.example.ui.screens.HijriScreen
+import com.example.ui.screens.LocationsScreen
 import com.example.ui.screens.PrayersScreen
 import com.example.ui.screens.QiblaScreen
 import com.example.ui.screens.SettingsScreen
@@ -57,7 +59,8 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Qibla : Screen("qibla", "Qibla", Icons.Default.Explore)
     object Hijri : Screen("hijri", "Hijri", Icons.Default.CalendarToday)
     object Agenda : Screen("agenda", "Agenda", Icons.Default.Alarm)
-    object Settings : Screen("settings", "More", Icons.Default.LocationOn)
+    object Settings : Screen("settings", "Settings", Icons.Default.Settings)
+    object Locations : Screen("locations", "Locations", Icons.Default.LocationOn)
 }
 
 class MainActivity : ComponentActivity() {
@@ -175,7 +178,15 @@ fun MainAppContainer() {
                 AgendaScreen(viewModel = viewModel)
             }
             composable(Screen.Settings.route) {
-                SettingsScreen(viewModel = viewModel)
+                SettingsScreen(
+                    onNavigateToLocations = { navController.navigate(Screen.Locations.route) }
+                )
+            }
+            composable(Screen.Locations.route) {
+                LocationsScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() }
+                )
             }
         }
     }
