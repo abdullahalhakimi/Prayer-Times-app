@@ -1,6 +1,5 @@
 package com.example.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,15 +13,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.batoulapps.adhan.CalculationMethod
 import com.example.data.City
 import com.example.data.Country
+import com.example.data.CityRepository
 import com.example.data.CountryCityProvider
 import com.example.ui.theme.DeepTeal
 import com.example.ui.theme.WarmCreame
+import kotlinx.coroutines.delay
 
 enum class ManualStep {
     SELECT_COUNTRY,
@@ -76,7 +79,7 @@ fun ManualAddLocationScreen(
                     selectedCountry = it
                     currentStep = ManualStep.SELECT_CITY
                 }
-                ManualStep.SELECT_CITY -> CityList(selectedCountry?.code ?: "") {
+                ManualStep.SELECT_CITY -> CityList(selectedCountry!!) {
                     selectedCity = it
                     currentStep = ManualStep.SUMMARY
                 }
@@ -115,21 +118,58 @@ fun CountryList(onCountrySelected: (Country) -> Unit) {
 }
 
 @Composable
-fun CityList(countryCode: String, onCitySelected: (City) -> Unit) {
+fun CityList(country: Country, onCitySelected: (City) -> Unit) {
     var searchQuery by remember { mutableStateOf("") }
-    val filteredCities = CountryCityProvider.getCitiesForCountry(countryCode).filter {
-        it.name.contains(searchQuery, ignoreCase = true)
+    var cities by remember(country.code) { mutableStateOf<List<City>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    LaunchedEffect(country.code, searchQuery) {
+        isLoading = true
+        if (searchQuery.isNotBlank()) {
+            delay(300)
+        }
+        cities = CityRepository.getCitiesForCountry(context, country, searchQuery)
+        isLoading = false
     }
 
     Column {
-        SearchBar(query = searchQuery, onQueryChange = { searchQuery = it }, placeholder = "Search City")
-        LazyColumn {
-            items(filteredCities) { city ->
-                ListItem(
-                    headlineContent = { Text(city.name) },
-                    modifier = Modifier.clickable { onCitySelected(city) }
-                )
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Color.LightGray.copy(alpha = 0.5f))
+        SearchBar(
+            query = searchQuery,
+            onQueryChange = { searchQuery = it },
+            placeholder = "Search City in ${country.name}..."
+        )
+        
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = DeepTeal)
+            }
+        } else if (cities.isEmpty() && searchQuery.isBlank()) {
+            Box(modifier = Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.LightGray)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        "No saved cities are available for ${country.name}. Start typing to search and cache results.",
+                        textAlign = TextAlign.Center,
+                        color = Color.Gray
+                    )
+                }
+            }
+        } else if (cities.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No cities found for \"$searchQuery\"", color = Color.Gray)
+            }
+        } else {
+            LazyColumn {
+                items(cities) { city ->
+                    ListItem(
+                        headlineContent = { Text(city.name) },
+                        supportingContent = { Text("${city.lat}, ${city.lon}") },
+                        modifier = Modifier.clickable { onCitySelected(city) }
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Color.LightGray.copy(alpha = 0.5f))
+                }
             }
         }
     }
