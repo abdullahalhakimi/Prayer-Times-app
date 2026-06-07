@@ -17,6 +17,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import com.example.ui.PrayerTimesViewModel
 import com.example.ui.theme.DeepTeal
 import com.example.ui.theme.WarmCreame
@@ -30,7 +32,7 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings", fontWeight = FontWeight.Bold, color = Color.White) },
+                title = { Text(stringResource(R.string.settings_title), fontWeight = FontWeight.Bold, color = Color.White) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = DeepTeal)
             )
         },
@@ -59,13 +61,13 @@ fun SettingsScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Info,
-                        contentDescription = "Setting notes description",
+                        contentDescription = stringResource(R.string.setting_notes_description),
                         tint = DeepTeal,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Customize your prayer times experience and manage city-specific calculation methods.",
+                        text = stringResource(R.string.settings_header_note),
                         fontSize = 12.sp,
                         color = Color(0xFF444444),
                         lineHeight = 16.sp
@@ -74,7 +76,7 @@ fun SettingsScreen(
             }
 
             Text(
-                text = "GENERAL SETTINGS",
+                text = stringResource(R.string.general_settings_header),
                 fontSize = 12.sp,
                 color = Color.Gray,
                 fontWeight = FontWeight.Bold,
@@ -84,8 +86,8 @@ fun SettingsScreen(
 
             SettingsItem(
                 icon = Icons.Default.LocationOn,
-                title = "Managed Locations",
-                subtitle = "Add, remove or switch between cities",
+                title = stringResource(R.string.managed_locations_title),
+                subtitle = stringResource(R.string.managed_locations_subtitle),
                 onClick = onNavigateToLocations
             )
         }

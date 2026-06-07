@@ -51,6 +51,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import com.example.data.PrayerTimeItem
 import com.example.ui.NotificationType
 import com.example.ui.PrayerTimesViewModel
@@ -119,7 +121,7 @@ fun PrayersScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.LocationOn,
-                        contentDescription = "Location",
+                        contentDescription = stringResource(R.string.location_description),
                         tint = AmberAccent,
                         modifier = Modifier.size(20.dp),
                     )
@@ -144,7 +146,7 @@ fun PrayersScreen(
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            text = "UPCOMING PRAYER",
+                            text = stringResource(R.string.upcoming_prayer_label),
                             color = Color.White.copy(alpha = 0.6f),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
@@ -160,7 +162,7 @@ fun PrayersScreen(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Starts at $upcomingTime",
+                            text = stringResource(R.string.starts_at, upcomingTime),
                             color = AmberAccent,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium
@@ -177,7 +179,7 @@ fun PrayersScreen(
                     ) {
                         Icon(
                             imageVector = if (isDayTime) Icons.Default.LightMode else Icons.Default.NightsStay,
-                            contentDescription = "Visual indication indicator",
+                            contentDescription = stringResource(R.string.visual_indicator_description),
                             tint = if (isDayTime) AmberAccent else Color(0xFFE2F0D9),
                             modifier = Modifier.size(54.dp)
                         )
@@ -200,13 +202,13 @@ fun PrayersScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.AccessTime,
-                                contentDescription = "Countdown Timer",
+                                contentDescription = stringResource(R.string.countdown_timer_description),
                                 tint = Color.LightGray,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Time remaining:",
+                                text = stringResource(R.string.time_remaining_label),
                                 color = Color.White.copy(alpha = 0.8f),
                                 fontSize = 13.sp
                             )
@@ -313,7 +315,7 @@ fun PrayerTimeItemRow(
                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
                                 Text(
-                                    text = "CURRENT",
+                                    text = stringResource(R.string.current_label),
                                     color = Color.White,
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Bold,
@@ -364,7 +366,7 @@ fun PrayerTimeItemRow(
 
                 Icon(
                     imageVector = icon,
-                    contentDescription = "Toggle Bell Notification type",
+                    contentDescription = stringResource(R.string.toggle_bell_description),
                     tint = tintColor,
                     modifier = Modifier.size(20.dp)
                 )

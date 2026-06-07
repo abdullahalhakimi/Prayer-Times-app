@@ -1,3 +1,25 @@
 <resources>
     <string name="app_name">Prayer Times</string>
+    <string name="location_description">Location</string>
+    <string name="upcoming_prayer_label">UPCOMING PRAYER</string>
+    <string name="starts_at">Starts at %1$s</string>
+    <string name="visual_indicator_description">Visual indication indicator</string>
+    <string name="countdown_timer_description">Countdown Timer</string>
+    <string name="time_remaining_label">Time remaining:</string>
+    <string name="current_label">CURRENT</string>
+    <string name="toggle_bell_description">Toggle Bell Notification type</string>
+    <string name="settings_title">Settings</string>
+    <string name="setting_notes_description">Setting notes description</string>
+    <string name="settings_header_note">Customize your prayer times experience and manage city-specific calculation methods.</string>
+    <string name="general_settings_header">GENERAL SETTINGS</string>
+    <string name="managed_locations_title">Managed Locations</string>
+    <string name="managed_locations_subtitle">Add, remove or switch between cities</string>
+    <string name="screen_prayers">Prayers</string>
+    <string name="screen_qibla">Qibla</string>
+    <string name="screen_hijri">Hijri</string>
+    <string name="screen_agenda">Agenda</string>
+    <string name="screen_settings">Settings</string>
+    <string name="screen_locations">Locations</string>
+    <string name="countdown_format">%1$d hours %2$dm left</string>
+    <string name="switched_to_location">Switched to %1$s</string>
 </resources>

@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -30,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,13 +56,13 @@ import com.example.ui.theme.InactiveTextColor
 import com.example.ui.theme.MyApplicationTheme
 import android.graphics.Color as AndroidColor
 
-sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object Prayers : Screen("prayers", "Prayers", Icons.Default.AccessTime)
-    object Qibla : Screen("qibla", "Qibla", Icons.Default.Explore)
-    object Hijri : Screen("hijri", "Hijri", Icons.Default.CalendarToday)
-    object Agenda : Screen("agenda", "Agenda", Icons.Default.Alarm)
-    object Settings : Screen("settings", "Settings", Icons.Default.Settings)
-    object Locations : Screen("locations", "Locations", Icons.Default.LocationOn)
+sealed class Screen(val route: String, @StringRes val titleResId: Int, val icon: ImageVector) {
+    object Prayers : Screen("prayers", R.string.screen_prayers, Icons.Default.AccessTime)
+    object Qibla : Screen("qibla", R.string.screen_qibla, Icons.Default.Explore)
+    object Hijri : Screen("hijri", R.string.screen_hijri, Icons.Default.CalendarToday)
+    object Agenda : Screen("agenda", R.string.screen_agenda, Icons.Default.Alarm)
+    object Settings : Screen("settings", R.string.screen_settings, Icons.Default.Settings)
+    object Locations : Screen("locations", R.string.screen_locations, Icons.Default.LocationOn)
 }
 
 class MainActivity : ComponentActivity() {
@@ -136,13 +138,13 @@ fun MainAppContainer() {
                         icon = {
                             Icon(
                                 imageVector = screen.icon,
-                                contentDescription = screen.title,
+                                contentDescription = stringResource(screen.titleResId),
                                 modifier = Modifier.size(24.dp)
                             )
                         },
                         label = {
                             Text(
-                                text = screen.title,
+                                text = stringResource(screen.titleResId),
                                 fontSize = 11.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                             )

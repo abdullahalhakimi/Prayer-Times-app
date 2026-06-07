@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.location.Geocoder
 import android.widget.Toast
+import com.example.R
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.batoulapps.adhan.CalculationMethod
@@ -251,7 +252,7 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
         val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
         sharedPrefs.edit().putString("saved_location", config.name).apply()
 
-        Toast.makeText(getApplication(), "Switched to ${config.name}", Toast.LENGTH_SHORT).show()
+        Toast.makeText(getApplication(), getApplication<Application>().getString(R.string.switched_to_location, config.name), Toast.LENGTH_SHORT).show()
     }
 
     fun setToLondon() {
@@ -395,9 +396,9 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
             val totalSeconds = diffMs / 1000
             val hours = totalSeconds / 3600
             val minutes = (totalSeconds % 3600) / 60
-            _countdownStr.value = "$hours hours ${minutes}m left"
+            _countdownStr.value = getApplication<Application>().getString(R.string.countdown_format, hours, minutes)
         } else {
-            _countdownStr.value = "0 hours 0m left"
+            _countdownStr.value = getApplication<Application>().getString(R.string.countdown_format, 0, 0)
         }
 
         // Determine day vs night graphics
