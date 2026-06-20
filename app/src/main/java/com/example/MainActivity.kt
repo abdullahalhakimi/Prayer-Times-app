@@ -23,6 +23,8 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -90,6 +92,13 @@ fun MainAppContainer() {
     val navController = rememberNavController()
     val viewModel: PrayerTimesViewModel = viewModel()
     val compassViewModel: CompassViewModel = viewModel()
+
+    // Synchronize selected location (latitude/longitude) to the Qibla CompassViewModel
+    val latitude by viewModel.currentLatitude.collectAsState()
+    val longitude by viewModel.currentLongitude.collectAsState()
+    LaunchedEffect(latitude, longitude) {
+        compassViewModel.updateLocation(latitude, longitude)
+    }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route

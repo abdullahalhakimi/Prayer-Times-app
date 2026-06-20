@@ -27,6 +27,7 @@ class CompassViewModel(application: Application) : AndroidViewModel(application)
     private val _magneticField = MutableStateFlow(48.2f) // magnetic field strength in microTesla (µT)
     val magneticField: StateFlow<Float> = _magneticField
 
+    private val alpha = 0.15f
     private var gravityValues = FloatArray(3)
     private var geomagneticValues = FloatArray(3)
     private var hasGravity = false
@@ -62,11 +63,23 @@ class CompassViewModel(application: Application) : AndroidViewModel(application)
 
     override fun onSensorChanged(event: SensorEvent) {
         if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
-            System.arraycopy(event.values, 0, gravityValues, 0, event.values.size)
-            hasGravity = true
+            if (!hasGravity) {
+                System.arraycopy(event.values, 0, gravityValues, 0, event.values.size)
+                hasGravity = true
+            } else {
+                gravityValues[0] = gravityValues[0] + alpha * (event.values[0] - gravityValues[0])
+                gravityValues[1] = gravityValues[1] + alpha * (event.values[1] - gravityValues[1])
+                gravityValues[2] = gravityValues[2] + alpha * (event.values[2] - gravityValues[2])
+            }
         } else if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
-            System.arraycopy(event.values, 0, geomagneticValues, 0, event.values.size)
-            hasGeomagnetic = true
+            if (!hasGeomagnetic) {
+                System.arraycopy(event.values, 0, geomagneticValues, 0, event.values.size)
+                hasGeomagnetic = true
+            } else {
+                geomagneticValues[0] = geomagneticValues[0] + alpha * (event.values[0] - geomagneticValues[0])
+                geomagneticValues[1] = geomagneticValues[1] + alpha * (event.values[1] - geomagneticValues[1])
+                geomagneticValues[2] = geomagneticValues[2] + alpha * (event.values[2] - geomagneticValues[2])
+            }
             
             // Calculate Magnetic Field Strength in microTesla (µT)
             val strength = sqrt(

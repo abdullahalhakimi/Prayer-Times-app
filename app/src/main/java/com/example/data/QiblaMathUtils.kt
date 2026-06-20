@@ -21,7 +21,7 @@ object QiblaMathUtils {
 
         val deltaLon = lon2 - lon1
 
-        val y = sin(deltaLon)
+        val y = sin(deltaLon) * cos(lat2)
         val x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(deltaLon)
 
         val bearingRad = atan2(y, x)
