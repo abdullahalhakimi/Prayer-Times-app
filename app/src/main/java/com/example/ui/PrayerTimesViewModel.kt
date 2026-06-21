@@ -3,7 +3,9 @@ package com.example.ui
 import android.app.Application
 import android.content.Context
 import android.location.Geocoder
+import android.os.Build
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import com.example.R
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -26,6 +28,7 @@ import java.util.*
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import kotlin.time.Duration.Companion.milliseconds
 
 enum class NotificationType(val label: String) {
     SILENT("Silent"),
@@ -378,7 +381,7 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
         tickerJob = viewModelScope.launch {
             while (isActive) {
                 updateCountdown()
-                delay(1000)
+                delay(duration = 1000.milliseconds)
             }
         }
     }
@@ -433,6 +436,7 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
     /**
      * Converts a LocalDate to formatted Hijri string (Native Chronology)
      */
+    @RequiresApi(Build.VERSION_CODES.O)
     fun formatHijriDate(localDate: LocalDate): String {
         return try {
             val hijrahDate = HijrahDate.from(localDate)
@@ -453,6 +457,7 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
     /**
      * Helper to get Hijri Day Integer for double-grid calendar view
      */
+    @RequiresApi(Build.VERSION_CODES.O)
     fun getHijriDay(localDate: LocalDate): Int {
         return try {
             val hijrahDate = HijrahDate.from(localDate)
