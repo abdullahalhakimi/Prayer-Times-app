@@ -45,6 +45,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.ui.CompassViewModel
 import com.example.ui.PrayerTimesViewModel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import com.example.ui.screens.AgendaScreen
 import com.example.ui.screens.HijriScreen
 import com.example.ui.screens.LocationsScreen
@@ -87,11 +90,30 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MainAppContainer() {
     val navController = rememberNavController()
     val viewModel: PrayerTimesViewModel = viewModel()
     val compassViewModel: CompassViewModel = viewModel()
+
+    val locationPermissionState = rememberPermissionState(
+        android.Manifest.permission.ACCESS_FINE_LOCATION
+    )
+
+    // Request location permission on first launch if not already granted
+    LaunchedEffect(Unit) {
+        if (!locationPermissionState.status.isGranted) {
+            locationPermissionState.launchPermissionRequest()
+        }
+    }
+
+    // Fetch GPS location when permission is granted
+    LaunchedEffect(locationPermissionState.status.isGranted) {
+        if (locationPermissionState.status.isGranted) {
+            viewModel.fetchAndSetGpsLocation()
+        }
+    }
 
     // Synchronize selected location (latitude/longitude) to the Qibla CompassViewModel
     val latitude by viewModel.currentLatitude.collectAsState()

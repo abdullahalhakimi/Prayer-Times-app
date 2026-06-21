@@ -1,6 +1,7 @@
 package com.example.ui
 
 import android.app.Application
+import android.hardware.GeomagneticField
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -33,6 +34,8 @@ class CompassViewModel(application: Application) : AndroidViewModel(application)
     private var hasGravity = false
     private var hasGeomagnetic = false
 
+    private var declination = 0f
+
     // Default current coordinate (City of London)
     private var currentLat = 51.5074
     private var currentLon = -0.1278
@@ -46,6 +49,8 @@ class CompassViewModel(application: Application) : AndroidViewModel(application)
         currentLon = lon
         val bearing = QiblaMathUtils.calculateQiblaBearing(lat, lon)
         _qiblaBearing.value = bearing.toFloat()
+        val geoField = GeomagneticField(lat.toFloat(), lon.toFloat(), 0f, System.currentTimeMillis())
+        declination = geoField.declination
     }
 
     fun registerListeners() {
@@ -99,7 +104,7 @@ class CompassViewModel(application: Application) : AndroidViewModel(application)
                 SensorManager.getOrientation(rValues, orientationValues)
                 val azimuthRad = orientationValues[0]
                 var azimuthDeg = Math.toDegrees(azimuthRad.toDouble()).toFloat()
-                azimuthDeg = (azimuthDeg + 360) % 360
+                azimuthDeg = (azimuthDeg + declination + 360) % 360
                 _azimuth.value = azimuthDeg
             }
         }

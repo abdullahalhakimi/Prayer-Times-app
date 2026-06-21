@@ -202,19 +202,38 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
                     val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
                     val cityName = addresses?.firstOrNull()?.locality ?: "Current Location"
                     
-                    addLocation(
-                        name = cityName,
-                        lat = location.latitude,
-                        lon = location.longitude,
-                        method = CalculationMethod.MOONSIGHTING_COMMITTEE, // Default
-                        madhab = Madhab.SHAFI
-                    )
+                    _currentLocationName.value = cityName
+                    _currentLatitude.value = location.latitude
+                    _currentLongitude.value = location.longitude
+                    recalculate()
                     onComplete(true)
                 } else {
                     onComplete(false)
                 }
             } catch (e: Exception) {
                 onComplete(false)
+            }
+        }
+    }
+
+    fun fetchAndSetGpsLocation() {
+        viewModelScope.launch {
+            try {
+                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication<Application>())
+                val location = fusedLocationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null).await()
+
+                if (location != null) {
+                    val geocoder = Geocoder(getApplication(), Locale.getDefault())
+                    val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                    val cityName = addresses?.firstOrNull()?.locality ?: "Current Location"
+
+                    _currentLocationName.value = cityName
+                    _currentLatitude.value = location.latitude
+                    _currentLongitude.value = location.longitude
+                    recalculate()
+                }
+            } catch (_: Exception) {
+                // GPS unavailable or permission not granted — keep saved location
             }
         }
     }
