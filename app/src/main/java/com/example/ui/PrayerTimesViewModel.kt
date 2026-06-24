@@ -57,6 +57,9 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
     private val _currentLongitude = MutableStateFlow(-0.1278)
     val currentLongitude: StateFlow<Double> = _currentLongitude
 
+    private val _isLocationEnabled = MutableStateFlow(true)
+    val isLocationEnabled: StateFlow<Boolean> = _isLocationEnabled
+
     private val _currentMethod = MutableStateFlow(CalculationMethod.MOONSIGHTING_COMMITTEE)
     val currentMethod: StateFlow<CalculationMethod> = _currentMethod
 
@@ -196,6 +199,12 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
 
     fun addLocationFromGps(onComplete: (Boolean) -> Unit) {
         viewModelScope.launch {
+            if (!LocationHelper.isLocationEnabled(getApplication())) {
+                _isLocationEnabled.value = false
+                onComplete(false)
+                return@launch
+            }
+            _isLocationEnabled.value = true
             try {
                 val fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication<Application>())
                 val location = fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
@@ -221,6 +230,11 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
 
     fun fetchAndSetGpsLocation() {
         viewModelScope.launch {
+            if (!LocationHelper.isLocationEnabled(getApplication())) {
+                _isLocationEnabled.value = false
+                return@launch
+            }
+            _isLocationEnabled.value = true
             try {
                 val fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication<Application>())
                 val location = fusedLocationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null).await()
@@ -234,6 +248,8 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
                     _currentLatitude.value = location.latitude
                     _currentLongitude.value = location.longitude
                     recalculate()
+                } else {
+                    _isLocationEnabled.value = false
                 }
             } catch (_: Exception) {
                 // GPS unavailable or permission not granted — keep saved location

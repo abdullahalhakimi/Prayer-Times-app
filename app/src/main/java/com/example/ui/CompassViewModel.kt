@@ -28,6 +28,9 @@ class CompassViewModel(application: Application) : AndroidViewModel(application)
     private val _magneticField = MutableStateFlow(48.2f) // magnetic field strength in microTesla (µT)
     val magneticField: StateFlow<Float> = _magneticField
 
+    private val _isLocationEnabled = MutableStateFlow(true)
+    val isLocationEnabled: StateFlow<Boolean> = _isLocationEnabled
+
     private val alpha = 0.15f
     private var gravityValues = FloatArray(3)
     private var geomagneticValues = FloatArray(3)
@@ -51,6 +54,10 @@ class CompassViewModel(application: Application) : AndroidViewModel(application)
         _qiblaBearing.value = bearing.toFloat()
         val geoField = GeomagneticField(lat.toFloat(), lon.toFloat(), 0f, System.currentTimeMillis())
         declination = geoField.declination
+    }
+
+    fun setLocationEnabled(enabled: Boolean) {
+        _isLocationEnabled.value = enabled
     }
 
     fun registerListeners() {

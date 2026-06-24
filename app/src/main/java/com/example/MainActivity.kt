@@ -37,6 +37,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -115,11 +117,24 @@ fun MainAppContainer() {
         }
     }
 
+    // Re-fetch location when app resumes (e.g. after returning from settings)
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        if (locationPermissionState.status.isGranted) {
+            viewModel.fetchAndSetGpsLocation()
+        }
+    }
+
     // Synchronize selected location (latitude/longitude) to the Qibla CompassViewModel
     val latitude by viewModel.currentLatitude.collectAsState()
     val longitude by viewModel.currentLongitude.collectAsState()
     LaunchedEffect(latitude, longitude) {
         compassViewModel.updateLocation(latitude, longitude)
+    }
+
+    // Synchronize location-enabled state to CompassViewModel
+    val isLocationEnabled by viewModel.isLocationEnabled.collectAsState()
+    LaunchedEffect(isLocationEnabled) {
+        compassViewModel.setLocationEnabled(isLocationEnabled)
     }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
