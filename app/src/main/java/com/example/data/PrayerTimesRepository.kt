@@ -86,17 +86,18 @@ class PrayerTimesRepository private constructor(context: Context) {
 
         try {
             val dateParam = formatDateParam(date)
-            val response = api.getTimings(
+            val apiResponse = api.getTimings(
                 date = dateParam,
                 latitude = latitude,
                 longitude = longitude,
                 method = method.aladhanId,
                 school = madhab.aladhanSchool
             )
-            prefs.edit {
-                putString(cacheKey, dailyAdapter.toJson(response))
-                    .putLong(cacheKey + "_ts", System.currentTimeMillis())
-            }
+            val response = apiResponse.data
+            prefs.edit()
+                .putString(cacheKey, dailyAdapter.toJson(response))
+                .putLong(cacheKey + "_ts", System.currentTimeMillis())
+                .apply()
             FetchResult.Success(
                 items = toPrayerTimeItems(response.timings, date),
                 source = Source.NETWORK,
@@ -119,7 +120,7 @@ class PrayerTimesRepository private constructor(context: Context) {
                 error = "Offline mode: using local calculation."
             )
         } catch (e: Exception) {
-            Log.w(TAG, "Aladhan unexpected error; falling back to local calc", e)
+            Log.e(TAG, "Aladhan unexpected error; falling back to local calc", e)
             FetchResult.Failure(
                 items = PrayerTimesCalculator.calculateTimes(
                     latitude, longitude, method.method, madhab.madhab, date
@@ -152,7 +153,7 @@ class PrayerTimesRepository private constructor(context: Context) {
         }
 
         try {
-            val response = api.getHijriCalendar(
+            val apiResponse = api.getHijriCalendar(
                 year = year,
                 month = month,
                 latitude = latitude,
@@ -160,6 +161,7 @@ class PrayerTimesRepository private constructor(context: Context) {
                 method = method.aladhanId,
                 school = madhab.aladhanSchool
             )
+            val response = apiResponse.data
             val list = response.hijri.orEmpty().map { entry ->
                 DailyTimings(
                     date = entry.date.gregorian.date.orEmpty(),

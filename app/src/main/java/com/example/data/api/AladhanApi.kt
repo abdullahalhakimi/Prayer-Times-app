@@ -27,7 +27,7 @@ interface AladhanApi {
         @Query("school") school: Int = 0,
         @Query("timezonestring") timezone: String? = null,
         @Query("calendarMethod") calendarMethod: String? = null
-    ): TimingsResponse
+    ): AladhanResponse<TimingsResponse>
 
     /**
      * Fetch the full Hijri+Gregorian calendar for a month (timings included).
@@ -41,5 +41,5 @@ interface AladhanApi {
         @Query("longitude") longitude: Double,
         @Query("method") method: Int,
         @Query("school") school: Int = 0
-    ): HijriCalendarResponse
+    ): AladhanResponse<HijriCalendarResponse>
 }

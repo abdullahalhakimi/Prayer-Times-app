@@ -7,7 +7,6 @@ import com.squareup.moshi.JsonClass
  * Top-level response shape used by all Aladhan v1 endpoints:
  * { "code": 200, "status": "OK", "data": <payload> }
  */
-@JsonClass(generateAdapter = true)
 data class AladhanResponse<T>(
     val code: Int,
     val status: String,
