@@ -18,12 +18,37 @@ enum class PrayerCalculationMethod(val displayName: String, val method: Calculat
     KUWAIT("Kuwait", CalculationMethod.KUWAIT),
     QATAR("Qatar", CalculationMethod.QATAR),
     SINGAPORE("Singapore", CalculationMethod.SINGAPORE),
-    TURKEY("Turkey", CalculationMethod.TURKEY)
+    TURKEY("Turkey", CalculationMethod.TURKEY);
+
+    /**
+     * Aladhan API calculation method id.
+     * https://api.aladhan.com/v1/methods
+     */
+    val aladhanId: Int
+        get() = when (this) {
+            KARACHI -> 1
+            NORTH_AMERICA -> 2
+            MUSLIM_WORLD_LEAGUE -> 3
+            UMM_AL_QURA -> 4
+            EGYPTIAN -> 5
+            KUWAIT -> 7
+            MOONSIGHTING_COMMITTEE -> 9
+            QATAR -> 10
+            SINGAPORE -> 11
+            TURKEY -> 13
+        }
 }
 
 enum class PrayerMadhab(val displayName: String, val madhab: Madhab) {
     STANDARD("Shafi, Maliki, Hanbali (Standard)", Madhab.SHAFI),
-    HANAFI("Hanafi", Madhab.HANAFI)
+    HANAFI("Hanafi", Madhab.HANAFI);
+
+    /** Aladhan school id: 0 = Shafi, 1 = Hanafi. */
+    val aladhanSchool: Int
+        get() = when (this) {
+            STANDARD -> 0
+            HANAFI -> 1
+        }
 }
 
 data class PrayerTimeItem(

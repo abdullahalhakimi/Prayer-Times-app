@@ -48,13 +48,13 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
     private val scheduler = SuhoorAlarmScheduler(application)
 
     // Current location configurations
-    private val _currentLocationName = MutableStateFlow("City of London")
+    private val _currentLocationName = MutableStateFlow("")
     val currentLocationName: StateFlow<String> = _currentLocationName
 
-    private val _currentLatitude = MutableStateFlow(51.5074)
+    private val _currentLatitude = MutableStateFlow(0.0)
     val currentLatitude: StateFlow<Double> = _currentLatitude
 
-    private val _currentLongitude = MutableStateFlow(-0.1278)
+    private val _currentLongitude = MutableStateFlow(0.0)
     val currentLongitude: StateFlow<Double> = _currentLongitude
 
     private val _isLocationEnabled = MutableStateFlow(true)
@@ -66,9 +66,48 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
     private val _currentMadhab = MutableStateFlow(Madhab.SHAFI)
     val currentMadhab: StateFlow<Madhab> = _currentMadhab
 
+    // Track whether any locations have been saved
+    private val _hasLocations = MutableStateFlow(false)
+    val hasLocations: StateFlow<Boolean> = _hasLocations
+
+    /** Wrapper enum matching the active Adhan method. */
+    private val currentPrayerMethod: PrayerCalculationMethod
+        get() = when (_currentMethod.value) {
+            CalculationMethod.UMM_AL_QURA -> PrayerCalculationMethod.UMM_AL_QURA
+            CalculationMethod.MUSLIM_WORLD_LEAGUE -> PrayerCalculationMethod.MUSLIM_WORLD_LEAGUE
+            CalculationMethod.EGYPTIAN -> PrayerCalculationMethod.EGYPTIAN
+            CalculationMethod.KARACHI -> PrayerCalculationMethod.KARACHI
+            CalculationMethod.NORTH_AMERICA -> PrayerCalculationMethod.NORTH_AMERICA
+            CalculationMethod.MOONSIGHTING_COMMITTEE -> PrayerCalculationMethod.MOONSIGHTING_COMMITTEE
+            CalculationMethod.KUWAIT -> PrayerCalculationMethod.KUWAIT
+            CalculationMethod.QATAR -> PrayerCalculationMethod.QATAR
+            CalculationMethod.SINGAPORE -> PrayerCalculationMethod.SINGAPORE
+            CalculationMethod.TURKEY -> PrayerCalculationMethod.TURKEY
+            else -> PrayerCalculationMethod.MOONSIGHTING_COMMITTEE
+        }
+
+    private val currentPrayerMadhab: PrayerMadhab
+        get() = when (_currentMadhab.value) {
+            Madhab.HANAFI -> PrayerMadhab.HANAFI
+            else -> PrayerMadhab.STANDARD
+        }
+
     // Calculated prayer times for current location & date
     private val _prayerTimes = MutableStateFlow<List<PrayerTimeItem>>(emptyList())
     val prayerTimes: StateFlow<List<PrayerTimeItem>> = _prayerTimes
+
+    // Network status
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+    private val _lastUpdated = MutableStateFlow<Long?>(null)
+    val lastUpdated: StateFlow<Long?> = _lastUpdated
+
+    private val _sourceLabel = MutableStateFlow("Offline")
+    val sourceLabel: StateFlow<String> = _sourceLabel
+
+    private val _hijriDate = MutableStateFlow<String?>(null)
+    val hijriDate: StateFlow<String?> = _hijriDate
 
     // Upcoming prayer tracking
     private val _upcomingPrayerName = MutableStateFlow("DHUHR")
@@ -113,22 +152,19 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
         initEvents()
         initNotificationStates()
 
-        // Pre-populate location preferences saved states
-        val sharedPrefs = application.getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
-        val savedLocName = sharedPrefs.getString("saved_location", "City of London") ?: "City of London"
-        
-        val savedConfig = _locationsList.value.find { it.name == savedLocName }
-        if (savedConfig != null) {
-            selectLocationAndSync(savedConfig)
-        } else {
-            // Fallback to first available or London if empty
-            val fallback = _locationsList.value.firstOrNull()
-            if (fallback != null) {
-                selectLocationAndSync(fallback)
-            } else {
-                setToLondon()
+        // Restore saved location if available
+        if (_hasLocations.value) {
+            val sharedPrefs = application.getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
+            val savedLocName = sharedPrefs.getString("saved_location", null)
+            val savedConfig = savedLocName?.let { name ->
+                _locationsList.value.find { it.name == name }
+            } ?: _locationsList.value.firstOrNull()
+
+            if (savedConfig != null) {
+                selectLocationAndSync(savedConfig)
             }
         }
+        // If no locations, _hasLocations is false — GPS or dialog will handle it
 
         // Start real-time countdown updates
         startTicker()
@@ -149,27 +185,15 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
     private fun initLocations() {
         val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
         val savedLocationsJson = sharedPrefs.getString("locations_list_json", null)
-        
+
         if (savedLocationsJson != null) {
             try {
                 _locationsList.value = locationListAdapter.fromJson(savedLocationsJson) ?: emptyList()
             } catch (e: Exception) {
-                loadDefaultLocations()
+                _locationsList.value = emptyList()
             }
-        } else {
-            loadDefaultLocations()
         }
-    }
-
-    private fun loadDefaultLocations() {
-        _locationsList.value = listOf(
-            LocationConfig("london", "City of London", 51.5074, -0.1278, CalculationMethod.MOONSIGHTING_COMMITTEE, Madhab.SHAFI),
-            LocationConfig("makkah", "Makkah", 21.4225, 39.8262, CalculationMethod.UMM_AL_QURA, Madhab.SHAFI),
-            LocationConfig("medina", "Medina", 24.4672, 39.6111, CalculationMethod.UMM_AL_QURA, Madhab.SHAFI),
-            LocationConfig("cairo", "Cairo", 30.0444, 31.2357, CalculationMethod.EGYPTIAN, Madhab.SHAFI),
-            LocationConfig("newyork", "New York", 40.7128, -74.0060, CalculationMethod.NORTH_AMERICA, Madhab.SHAFI)
-        )
-        saveLocations()
+        _hasLocations.value = _locationsList.value.isNotEmpty()
     }
 
     private fun saveLocations() {
@@ -188,12 +212,13 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
             madhab = madhab
         )
         _locationsList.value = _locationsList.value + newConfig
+        _hasLocations.value = true
         saveLocations()
     }
 
     fun deleteLocation(id: String) {
-        // Prevent deleting currently selected location if possible, or handle it
         _locationsList.value = _locationsList.value.filter { it.id != id }
+        _hasLocations.value = _locationsList.value.isNotEmpty()
         saveLocations()
     }
 
@@ -208,16 +233,25 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
             try {
                 val fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication<Application>())
                 val location = fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
-                
+
                 if (location != null) {
                     val geocoder = Geocoder(getApplication(), Locale.getDefault())
                     val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
                     val cityName = addresses?.firstOrNull()?.locality ?: "Current Location"
-                    
+
                     _currentLocationName.value = cityName
                     _currentLatitude.value = location.latitude
                     _currentLongitude.value = location.longitude
                     recalculate()
+
+                    // Persist this location so it survives app restarts
+                    val existingMatch = _locationsList.value.find {
+                        it.latitude == location.latitude && it.longitude == location.longitude
+                    }
+                    if (existingMatch == null) {
+                        addLocation(cityName, location.latitude, location.longitude, _currentMethod.value, _currentMadhab.value)
+                    }
+
                     onComplete(true)
                 } else {
                     onComplete(false)
@@ -293,41 +327,35 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
         Toast.makeText(getApplication(), getApplication<Application>().getString(R.string.switched_to_location, config.name), Toast.LENGTH_SHORT).show()
     }
 
-    fun setToLondon() {
-        _currentLocationName.value = "City of London"
-        _currentLatitude.value = 51.5074
-        _currentLongitude.value = -0.1278
-        _currentMethod.value = CalculationMethod.MOONSIGHTING_COMMITTEE
-        _currentMadhab.value = Madhab.SHAFI
-        recalculate()
-    }
-
-    fun setToMakkah() {
-        _currentLocationName.value = "Makkah"
-        _currentLatitude.value = 21.4225
-        _currentLongitude.value = 39.8262
-        _currentMethod.value = CalculationMethod.UMM_AL_QURA
-        _currentMadhab.value = Madhab.SHAFI
-        recalculate()
-    }
-
-    fun setToMedina() {
-        _currentLocationName.value = "Medina"
-        _currentLatitude.value = 24.4672
-        _currentLongitude.value = 39.6111
-        _currentMethod.value = CalculationMethod.UMM_AL_QURA
-        _currentMadhab.value = Madhab.SHAFI
-        recalculate()
-    }
-
     fun recalculate() {
-        _prayerTimes.value = PrayerTimesCalculator.calculateTimes(
-            latitude = _currentLatitude.value,
-            longitude = _currentLongitude.value,
-            method = _currentMethod.value,
-            madhab = _currentMadhab.value
-        )
-        updateCountdown()
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = PrayerTimesRepository.get(getApplication()).getTimes(
+                latitude = _currentLatitude.value,
+                longitude = _currentLongitude.value,
+                method = currentPrayerMethod,
+                madhab = currentPrayerMadhab
+            )
+            when (result) {
+                is PrayerTimesRepository.FetchResult.Success -> {
+                    _prayerTimes.value = result.items
+                    _lastUpdated.value = System.currentTimeMillis()
+                    _sourceLabel.value = when (result.source) {
+                        PrayerTimesRepository.Source.NETWORK -> "Aladhan API"
+                        PrayerTimesRepository.Source.CACHE -> "Cached"
+                        PrayerTimesRepository.Source.OFFLINE -> "Offline"
+                    }
+                    if (result.hijriDate != null) _hijriDate.value = result.hijriDate
+                }
+                is PrayerTimesRepository.FetchResult.Failure -> {
+                    _prayerTimes.value = result.items
+                    _sourceLabel.value = "Offline"
+                    Toast.makeText(getApplication(), result.error, Toast.LENGTH_SHORT).show()
+                }
+            }
+            _isLoading.value = false
+            updateCountdown()
+        }
     }
 
     fun togglePrayerNotification(prayerName: String) {
@@ -390,6 +418,32 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
             method = config.method,
             madhab = config.madhab
         )
+    }
+
+    /** Force a fresh fetch from the network, bypassing the local cache. */
+    fun forceRefresh() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = PrayerTimesRepository.get(getApplication()).getTimes(
+                latitude = _currentLatitude.value,
+                longitude = _currentLongitude.value,
+                method = currentPrayerMethod,
+                madhab = currentPrayerMadhab
+            )
+            when (result) {
+                is PrayerTimesRepository.FetchResult.Success -> {
+                    _prayerTimes.value = result.items
+                    _lastUpdated.value = System.currentTimeMillis()
+                    _sourceLabel.value = "Aladhan API"
+                    if (result.hijriDate != null) _hijriDate.value = result.hijriDate
+                }
+                is PrayerTimesRepository.FetchResult.Failure -> {
+                    Toast.makeText(getApplication(), result.error, Toast.LENGTH_SHORT).show()
+                }
+            }
+            _isLoading.value = false
+            updateCountdown()
+        }
     }
 
     private fun startTicker() {

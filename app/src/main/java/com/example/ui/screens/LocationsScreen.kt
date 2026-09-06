@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,6 +29,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.batoulapps.adhan.CalculationMethod
 import com.batoulapps.adhan.Madhab
+import com.example.R
 import com.example.data.LocationConfig
 import com.example.ui.PrayerTimesViewModel
 import com.example.ui.theme.ActivePrayerBg
@@ -87,65 +89,97 @@ fun LocationsScreen(
                 .padding(innerPadding)
                 .padding(16.dp)
         ) {
-            
-            // Header note card
-            Card(
-                colors = CardDefaults.cardColors(containerColor = DeepTeal.copy(alpha = 0.06f)),
-                shape = RoundedCornerShape(16.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, DeepTeal.copy(alpha = 0.12f)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+            if (locations.isEmpty()) {
+                // Empty state
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = "Setting notes description",
-                        tint = DeepTeal,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Selecting any city updates calculation variables globally, using region-authorized methods.",
-                        fontSize = 12.sp,
-                        color = Color(0xFF444444),
-                        lineHeight = 16.sp
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = Color.LightGray
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.no_locations_saved),
+                            color = Color.Gray,
+                            fontSize = 16.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.no_locations_hint),
+                            color = Color.Gray,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
-            }
+            } else {
+                // Header note card
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = DeepTeal.copy(alpha = 0.06f)),
+                    shape = RoundedCornerShape(16.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, DeepTeal.copy(alpha = 0.12f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = "Setting notes description",
+                            tint = DeepTeal,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Selecting any city updates calculation variables globally, using region-authorized methods.",
+                            fontSize = 12.sp,
+                            color = Color(0xFF444444),
+                            lineHeight = 16.sp
+                        )
+                    }
+                }
 
-            Text(
-                text = "SAVED PLACES & TIME COMPARISONS",
-                fontSize = 12.sp,
-                color = Color.Gray,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp,
-                modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
-            )
+                Text(
+                    text = "SAVED PLACES & TIME COMPARISONS",
+                    fontSize = 12.sp,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp,
+                    modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
+                )
 
-            // Scrollable list of locations
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .testTag("locations_list"),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(locations) { config ->
-                    val isSelected = config.name.equals(activeName, ignoreCase = true)
-                    val correspondingTimes = viewModel.calculateSpecificLocationTimes(config)
+                // Scrollable list of locations
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .testTag("locations_list"),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(locations) { config ->
+                        val isSelected = config.name.equals(activeName, ignoreCase = true)
+                        val correspondingTimes = viewModel.calculateSpecificLocationTimes(config)
 
-                    LocationCardRow(
-                        config = config,
-                        times = correspondingTimes,
-                        isSelected = isSelected,
-                        onSelect = { viewModel.selectLocationAndSync(config) },
-                        onDelete = { viewModel.deleteLocation(config.id) }
-                    )
+                        LocationCardRow(
+                            config = config,
+                            times = correspondingTimes,
+                            isSelected = isSelected,
+                            onSelect = { viewModel.selectLocationAndSync(config) },
+                            onDelete = { viewModel.deleteLocation(config.id) }
+                        )
+                    }
                 }
             }
         }

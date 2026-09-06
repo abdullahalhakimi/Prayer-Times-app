@@ -26,6 +26,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -37,6 +40,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -45,6 +50,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.batoulapps.adhan.Madhab
 import com.example.ui.CompassViewModel
 import com.example.ui.PrayerTimesViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -53,6 +59,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.example.ui.screens.AgendaScreen
 import com.example.ui.screens.HijriScreen
 import com.example.ui.screens.LocationsScreen
+import com.example.ui.screens.ManualAddLocationScreen
 import com.example.ui.screens.PrayersScreen
 import com.example.ui.screens.QiblaScreen
 import com.example.ui.screens.SettingsScreen
@@ -103,23 +110,34 @@ fun MainAppContainer() {
         android.Manifest.permission.ACCESS_FINE_LOCATION
     )
 
-    // Request location permission on first launch if not already granted
+    val hasLocations by viewModel.hasLocations.collectAsState()
+    var showAddLocationDialog by remember { mutableStateOf(false) }
+
+    // First-launch logic: try GPS first, then show mandatory dialog
     LaunchedEffect(Unit) {
         if (!locationPermissionState.status.isGranted) {
             locationPermissionState.launchPermissionRequest()
         }
     }
 
-    // Fetch GPS location when permission is granted
-    LaunchedEffect(locationPermissionState.status.isGranted) {
-        if (locationPermissionState.status.isGranted) {
-            viewModel.fetchAndSetGpsLocation()
+    LaunchedEffect(hasLocations, locationPermissionState.status.isGranted) {
+        if (!hasLocations) {
+            if (locationPermissionState.status.isGranted) {
+                // Try GPS first — if it succeeds, hasLocations becomes true and dialog never shows
+                viewModel.addLocationFromGps { success ->
+                    if (!success) {
+                        showAddLocationDialog = true
+                    }
+                }
+            } else {
+                showAddLocationDialog = true
+            }
         }
     }
 
-    // Re-fetch location when app resumes (e.g. after returning from settings)
+    // Re-fetch GPS location when app resumes (but only if we already have a location)
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        if (locationPermissionState.status.isGranted) {
+        if (hasLocations && locationPermissionState.status.isGranted) {
             viewModel.fetchAndSetGpsLocation()
         }
     }
@@ -135,6 +153,31 @@ fun MainAppContainer() {
     val isLocationEnabled by viewModel.isLocationEnabled.collectAsState()
     LaunchedEffect(isLocationEnabled) {
         compassViewModel.setLocationEnabled(isLocationEnabled)
+    }
+
+    // Mandatory add-location dialog
+    if (showAddLocationDialog) {
+        Dialog(
+            onDismissRequest = { /* no-op: mandatory */ },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            ManualAddLocationScreen(
+                onDismiss = { /* no-op: mandatory */ },
+                onAdd = { name, lat, lon, method ->
+                    viewModel.addLocation(name, lat, lon, method, Madhab.SHAFI)
+                    val newConfig = com.example.data.LocationConfig(
+                        id = java.util.UUID.randomUUID().toString(),
+                        name = name,
+                        latitude = lat,
+                        longitude = lon,
+                        method = method,
+                        madhab = Madhab.SHAFI
+                    )
+                    viewModel.selectLocationAndSync(newConfig)
+                    showAddLocationDialog = false
+                }
+            )
+        }
     }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()

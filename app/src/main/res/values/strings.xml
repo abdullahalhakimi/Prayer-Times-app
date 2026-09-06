@@ -22,4 +22,8 @@
     <string name="screen_locations">Locations</string>
     <string name="countdown_format">%1$d hours %2$dm left</string>
     <string name="switched_to_location">Switched to %1$s</string>
+    <string name="no_location_title">No Location Set</string>
+    <string name="no_location_subtitle">Add your first city to see prayer times</string>
+    <string name="no_locations_saved">No locations saved yet.</string>
+    <string name="no_locations_hint">Tap the + button to add your first city.</string>
 </resources>

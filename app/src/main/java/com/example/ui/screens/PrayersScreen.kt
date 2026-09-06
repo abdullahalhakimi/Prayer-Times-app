@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.NightsStay
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledIconButton
@@ -74,6 +75,9 @@ fun PrayersScreen(
     val prayerTimes by viewModel.prayerTimes.collectAsState()
     val notificationSettings by viewModel.prayerNotifications.collectAsState()
     val isDayTime by viewModel.isDayTime.collectAsState()
+    val sourceLabel by viewModel.sourceLabel.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val hasLocations by viewModel.hasLocations.collectAsState()
 
     // Rotating pulse animation for sun/moon graphic
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
@@ -233,20 +237,80 @@ fun PrayersScreen(
                 .weight(2.2f)
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(prayerTimes) { prayer ->
-                    val notificationType = notificationSettings[prayer.name] ?: NotificationType.SILENT
-                    val isActive = upcomingPrayer == prayer.name.uppercase()
+            if (prayerTimes.isEmpty() && !hasLocations) {
+                // No locations set — show placeholder
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = null,
+                            tint = DeepTeal.copy(alpha = 0.3f),
+                            modifier = Modifier.size(56.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.no_location_title),
+                            color = DeepTeal,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.no_location_subtitle),
+                            color = Color.Gray,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(prayerTimes) { prayer ->
+                        val notificationType = notificationSettings[prayer.name] ?: NotificationType.SILENT
+                        val isActive = upcomingPrayer == prayer.name.uppercase()
 
-                    PrayerTimeItemRow(
-                        prayer = prayer,
-                        notificationType = notificationType,
-                        isActive = isActive,
-                        onToggleNotification = { viewModel.togglePrayerNotification(prayer.name) }
-                    )
+                        PrayerTimeItemRow(
+                            prayer = prayer,
+                            notificationType = notificationType,
+                            isActive = isActive,
+                            onToggleNotification = { viewModel.togglePrayerNotification(prayer.name) }
+                        )
+                    }
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 6.dp, bottom = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "Source: $sourceLabel",
+                                color = DeepTeal.copy(alpha = 0.55f),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            androidx.compose.material3.IconButton(
+                                onClick = { viewModel.forceRefresh() },
+                                enabled = !isLoading
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "Refresh prayer times",
+                                    tint = DeepTeal.copy(alpha = if (isLoading) 0.3f else 0.8f),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
