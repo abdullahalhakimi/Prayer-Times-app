@@ -7,6 +7,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.NightsStay
@@ -35,12 +37,21 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,10 +74,12 @@ import com.example.ui.theme.BorderColor
 import com.example.ui.theme.DeepTeal
 import com.example.ui.theme.WarmCreame
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrayersScreen(
+    modifier: Modifier = Modifier,
     viewModel: PrayerTimesViewModel,
-    modifier: Modifier = Modifier
+    onNavigateToLocations: () -> Unit = {},
 ) {
     val locationName by viewModel.currentLocationName.collectAsState()
     val upcomingPrayer by viewModel.upcomingPrayerName.collectAsState()
@@ -78,6 +91,8 @@ fun PrayersScreen(
     val sourceLabel by viewModel.sourceLabel.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val hasLocations by viewModel.hasLocations.collectAsState()
+    val locationsList by viewModel.locationsList.collectAsState()
+    var showLocationSheet by remember { mutableStateOf(false) }
 
     // Rotating pulse animation for sun/moon graphic
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
@@ -119,7 +134,9 @@ fun PrayersScreen(
                 Spacer(modifier = Modifier.height(5.dp))
                 // Location header
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showLocationSheet = true },
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Start,
                 ) {
@@ -298,7 +315,7 @@ fun PrayersScreen(
                                 fontWeight = FontWeight.Medium
                             )
                             Spacer(modifier = Modifier.width(12.dp))
-                            androidx.compose.material3.IconButton(
+                            IconButton(
                                 onClick = { viewModel.forceRefresh() },
                                 enabled = !isLoading
                             ) {
@@ -311,6 +328,75 @@ fun PrayersScreen(
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    if (showLocationSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showLocationSheet = false },
+            containerColor = Color.White
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+                    .padding(bottom = 32.dp)
+            ) {
+                Text(
+                    text = "Switch Location",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DeepTeal
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                locationsList.forEach { config ->
+                    val isSelected = config.name.equals(locationName, ignoreCase = true)
+                    ListItem(
+                        headlineContent = {
+                            Text(
+                                text = config.name,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSelected) DeepTeal else Color(0xFF333333)
+                            )
+                        },
+                        leadingContent = {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = null,
+                                tint = if (isSelected) AmberAccent else Color.Gray,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
+                        trailingContent = {
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Selected",
+                                    tint = AmberAccent,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        },
+                        modifier = Modifier.clickable {
+                            viewModel.selectLocationAndSync(config)
+                            showLocationSheet = false
+                        }
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = Color.LightGray.copy(alpha = 0.5f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+                TextButton(onClick = {
+                    showLocationSheet = false
+                    onNavigateToLocations()
+                }) {
+                    Text("Manage locations", color = DeepTeal)
                 }
             }
         }

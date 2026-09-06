@@ -64,6 +64,7 @@ import com.example.ui.screens.PrayersScreen
 import com.example.ui.screens.QiblaScreen
 import com.example.ui.screens.SettingsScreen
 import com.example.ui.theme.ActivePrayerBg
+import com.example.ui.theme.AmberAccent
 import com.example.ui.theme.BorderColor
 import com.example.ui.theme.DeepTeal
 import com.example.ui.theme.InactiveTextColor
@@ -196,7 +197,7 @@ fun MainAppContainer() {
         bottomBar = {
             NavigationBar(
                 containerColor = Color.White,
-                tonalElevation = 0.dp, // No default heavy shadow, we draw our clean border line
+                tonalElevation = 0.dp,
                 modifier = Modifier
                     .testTag("app_navigation_bar")
                     .drawBehind {
@@ -228,7 +229,7 @@ fun MainAppContainer() {
                             Icon(
                                 imageVector = screen.icon,
                                 contentDescription = stringResource(screen.titleResId),
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(24.dp),
                             )
                         },
                         label = {
@@ -239,7 +240,7 @@ fun MainAppContainer() {
                             )
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = DeepTeal,
+                            selectedIconColor = AmberAccent,
                             selectedTextColor = DeepTeal,
                             indicatorColor = ActivePrayerBg,
                             unselectedIconColor = InactiveTextColor,
@@ -257,7 +258,10 @@ fun MainAppContainer() {
             modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
         ) {
             composable(Screen.Prayers.route) {
-                PrayersScreen(viewModel = viewModel)
+                PrayersScreen(
+                    viewModel = viewModel,
+                    onNavigateToLocations = { navController.navigate(Screen.Locations.route) }
+                )
             }
             composable(Screen.Qibla.route) {
                 QiblaScreen(viewModel = compassViewModel)

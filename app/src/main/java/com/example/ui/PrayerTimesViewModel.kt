@@ -29,6 +29,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlin.time.Duration.Companion.milliseconds
+import androidx.core.content.edit
 
 enum class NotificationType(val label: String) {
     SILENT("Silent"),
@@ -199,7 +200,7 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
     private fun saveLocations() {
         val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
         val json = locationListAdapter.toJson(_locationsList.value)
-        sharedPrefs.edit().putString("locations_list_json", json).apply()
+        sharedPrefs.edit { putString("locations_list_json", json) }
     }
 
     fun addLocation(name: String, lat: Double, lon: Double, method: CalculationMethod, madhab: Madhab) {
@@ -211,7 +212,7 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
             method = method,
             madhab = madhab
         )
-        _locationsList.value = _locationsList.value + newConfig
+        _locationsList.value += newConfig
         _hasLocations.value = true
         saveLocations()
     }
@@ -222,16 +223,17 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
         saveLocations()
     }
 
+    @Suppress("MissingPermission")
     fun addLocationFromGps(onComplete: (Boolean) -> Unit) {
         viewModelScope.launch {
-            if (!LocationHelper.isLocationEnabled(getApplication())) {
+            if (!LocationHelper.hasLocationPermission(getApplication()) || !LocationHelper.isLocationEnabled(getApplication())) {
                 _isLocationEnabled.value = false
                 onComplete(false)
                 return@launch
             }
             _isLocationEnabled.value = true
             try {
-                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication<Application>())
+                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication())
                 val location = fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
 
                 if (location != null) {
@@ -256,21 +258,25 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
                 } else {
                     onComplete(false)
                 }
+            } catch (e: SecurityException) {
+                _isLocationEnabled.value = false
+                onComplete(false)
             } catch (e: Exception) {
                 onComplete(false)
             }
         }
     }
 
+    @Suppress("MissingPermission")
     fun fetchAndSetGpsLocation() {
         viewModelScope.launch {
-            if (!LocationHelper.isLocationEnabled(getApplication())) {
+            if (!LocationHelper.hasLocationPermission(getApplication()) || !LocationHelper.isLocationEnabled(getApplication())) {
                 _isLocationEnabled.value = false
                 return@launch
             }
             _isLocationEnabled.value = true
             try {
-                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication<Application>())
+                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication())
                 val location = fusedLocationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null).await()
 
                 if (location != null) {
@@ -285,6 +291,8 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
                 } else {
                     _isLocationEnabled.value = false
                 }
+            } catch (_: SecurityException) {
+                _isLocationEnabled.value = false
             } catch (_: Exception) {
                 // GPS unavailable or permission not granted — keep saved location
             }
@@ -322,7 +330,7 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
         recalculate()
 
         val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
-        sharedPrefs.edit().putString("saved_location", config.name).apply()
+        sharedPrefs.edit { putString("saved_location", config.name) }
 
         Toast.makeText(getApplication(), getApplication<Application>().getString(R.string.switched_to_location, config.name), Toast.LENGTH_SHORT).show()
     }
