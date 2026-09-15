@@ -3,17 +3,14 @@ package com.example.data.api
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
-/**
- * Top-level response shape used by all Aladhan v1 endpoints:
- * { "code": 200, "status": "OK", "data": <payload> }
- */
-data class AladhanResponse<T>(
+// --- /timings/{date} ---
+
+@JsonClass(generateAdapter = true)
+data class TimingsApiResponse(
     val code: Int,
     val status: String,
-    val data: T
+    val data: TimingsResponse
 )
-
-// --- /timings/{date} ---
 
 @JsonClass(generateAdapter = true)
 data class TimingsResponse(
@@ -90,6 +87,13 @@ data class MethodInfo(
 )
 
 // --- /hijriCalendar/{year}/{month} ---
+
+@JsonClass(generateAdapter = true)
+data class HijriCalendarApiResponse(
+    val code: Int,
+    val status: String,
+    val data: HijriCalendarResponse
+)
 
 @JsonClass(generateAdapter = true)
 data class HijriCalendarResponse(
