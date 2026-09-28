@@ -1,4 +1,4 @@
-package com.example.data.api
+package com.prayertimesApp.data.api
 
 import retrofit2.http.GET
 import retrofit2.http.Path

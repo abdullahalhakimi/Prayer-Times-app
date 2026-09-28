@@ -1,4 +1,4 @@
-package com.example.data
+package com.prayertimesApp.data
 
 import com.batoulapps.adhan.Coordinates
 import com.batoulapps.adhan.CalculationMethod
@@ -51,6 +51,12 @@ enum class PrayerMadhab(val displayName: String, val madhab: Madhab) {
         }
 }
 
+enum class AppHighLatitudeRule(val displayName: String) {
+    MIDDLE_OF_THE_NIGHT("Middle of the Night"),
+    SEVENTH_OF_THE_NIGHT("Seventh of the Night"),
+    TWILIGHT_ANGLE("Twilight Angle")
+}
+
 data class PrayerTimeItem(
     val name: String,
     val date: Date,
@@ -67,7 +73,9 @@ object PrayerTimesCalculator {
         longitude: Double,
         method: CalculationMethod,
         madhab: Madhab,
-        date: Date = Date()
+        date: Date = Date(),
+        is24HourFormat: Boolean = false,
+        highLatitudeRule: AppHighLatitudeRule = AppHighLatitudeRule.MIDDLE_OF_THE_NIGHT
     ): List<PrayerTimeItem> {
         val coordinates = Coordinates(latitude, longitude)
         val calendar = Calendar.getInstance().apply { time = date }
@@ -85,15 +93,12 @@ object PrayerTimesCalculator {
         val prayerTimes = PrayerTimes(coordinates, dateComponents, parameters)
         
         // Calculate Qiyam (traditionally last 1/3 of the night, or halfway between sunset/Maghrib and Fajr of the next day)
-        // Here we'll do halfway between Maghrib and Fajr of next day, or simplified to 11:30 PM / calculated relative to midnight
         val maghribTime = prayerTimes.maghrib()
         val fajrTime = prayerTimes.fajr()
         
         val qiyamTime = if (maghribTime != null && fajrTime != null) {
-            // Halfway or default
             val calMaghrib = Calendar.getInstance().apply { time = maghribTime }
             val calFajr = Calendar.getInstance().apply { time = fajrTime }
-            // Fajr is next day, so add 1 day if necessary
             if (calFajr.before(calMaghrib)) {
                 calFajr.add(Calendar.DATE, 1)
             }
@@ -101,7 +106,6 @@ object PrayerTimesCalculator {
             val qiyamMillis = calMaghrib.timeInMillis + (diff * 2 / 3) // last third of night starts
             Date(qiyamMillis)
         } else {
-            // Fallback qiyam is 11:45 PM of current day
             val fallback = Calendar.getInstance().apply {
                 time = date
                 set(Calendar.HOUR_OF_DAY, 23)
@@ -111,7 +115,8 @@ object PrayerTimesCalculator {
             fallback.time
         }
 
-        val df = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault())
+        val timePattern = if (is24HourFormat) "HH:mm" else "hh:mm a"
+        val df = java.text.SimpleDateFormat(timePattern, java.util.Locale.getDefault())
 
         val list = mutableListOf<PrayerTimeItem>()
         prayerTimes.fajr()?.let { list.add(PrayerTimeItem("Fajr", it, df.format(it))) }
@@ -125,3 +130,4 @@ object PrayerTimesCalculator {
         return list
     }
 }
+

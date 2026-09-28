@@ -1,4 +1,4 @@
-package com.example.ui.screens
+package com.prayertimesApp.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,12 +29,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ui.EventReminder
-import com.example.ui.PrayerTimesViewModel
-import com.example.ui.theme.AmberAccent
-import com.example.ui.theme.DeepTeal
-import com.example.ui.theme.WarmCreame
-import com.example.ui.theme.BorderColor
+import com.prayertimesApp.ui.EventReminder
+import com.prayertimesApp.ui.PrayerTimesViewModel
+import com.prayertimesApp.ui.theme.AmberAccent
+import com.prayertimesApp.ui.theme.DeepTeal
+import com.prayertimesApp.ui.theme.WarmCreame
+import com.prayertimesApp.ui.theme.BorderColor
 import java.time.LocalDate
 import java.util.Calendar
 

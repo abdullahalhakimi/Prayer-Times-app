@@ -1,4 +1,4 @@
-package com.example.ui.screens
+package com.prayertimesApp.ui.screens
 
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.background
@@ -20,13 +20,13 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.data.AgendaReminder
-import com.example.data.PrayerTimeItem
-import com.example.ui.PrayerTimesViewModel
-import com.example.ui.theme.AmberAccent
-import com.example.ui.theme.DeepTeal
-import com.example.ui.theme.WarmCreame
-import com.example.ui.theme.BorderColor
+import com.prayertimesApp.data.AgendaReminder
+import com.prayertimesApp.data.PrayerTimeItem
+import com.prayertimesApp.ui.PrayerTimesViewModel
+import com.prayertimesApp.ui.theme.AmberAccent
+import com.prayertimesApp.ui.theme.DeepTeal
+import com.prayertimesApp.ui.theme.WarmCreame
+import com.prayertimesApp.ui.theme.BorderColor
 import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)

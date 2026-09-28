@@ -1,4 +1,4 @@
-package com.example.ui.screens
+package com.prayertimesApp.ui.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -29,14 +29,14 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.batoulapps.adhan.CalculationMethod
 import com.batoulapps.adhan.Madhab
-import com.example.R
-import com.example.data.LocationConfig
-import com.example.ui.PrayerTimesViewModel
-import com.example.ui.theme.ActivePrayerBg
-import com.example.ui.theme.AmberAccent
-import com.example.ui.theme.BorderColor
-import com.example.ui.theme.DeepTeal
-import com.example.ui.theme.WarmCreame
+import com.prayertimesApp.R
+import com.prayertimesApp.data.LocationConfig
+import com.prayertimesApp.ui.PrayerTimesViewModel
+import com.prayertimesApp.ui.theme.ActivePrayerBg
+import com.prayertimesApp.ui.theme.AmberAccent
+import com.prayertimesApp.ui.theme.BorderColor
+import com.prayertimesApp.ui.theme.DeepTeal
+import com.prayertimesApp.ui.theme.WarmCreame
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -333,7 +333,7 @@ fun getFriendlyMethodName(method: CalculationMethod): String {
 @Composable
 fun LocationCardRow(
     config: LocationConfig,
-    times: List<com.example.data.PrayerTimeItem>,
+    times: List<com.prayertimesApp.data.PrayerTimeItem>,
     isSelected: Boolean,
     onSelect: () -> Unit,
     onDelete: () -> Unit

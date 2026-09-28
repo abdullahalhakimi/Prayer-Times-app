@@ -31,7 +31,7 @@
         </activity>
 
         <receiver
-            android:name="com.example.data.AlarmReceiver"
+            android:name="com.prayertimesApp.data.AlarmReceiver"
             android:exported="false" />
 
     </application>

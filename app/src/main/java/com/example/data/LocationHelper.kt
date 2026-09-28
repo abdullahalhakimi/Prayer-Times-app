@@ -1,4 +1,4 @@
-package com.example.data
+package com.prayertimesApp.data
 
 import android.Manifest
 import android.content.Context

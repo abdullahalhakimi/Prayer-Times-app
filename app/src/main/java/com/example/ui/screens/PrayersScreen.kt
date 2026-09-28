@@ -1,4 +1,4 @@
-package com.example.ui.screens
+package com.prayertimesApp.ui.screens
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -64,15 +64,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
-import com.example.R
-import com.example.data.PrayerTimeItem
-import com.example.ui.NotificationType
-import com.example.ui.PrayerTimesViewModel
-import com.example.ui.theme.ActivePrayerBg
-import com.example.ui.theme.AmberAccent
-import com.example.ui.theme.BorderColor
-import com.example.ui.theme.DeepTeal
-import com.example.ui.theme.WarmCreame
+import com.prayertimesApp.R
+import com.prayertimesApp.data.PrayerTimeItem
+import com.prayertimesApp.ui.NotificationType
+import com.prayertimesApp.ui.PrayerTimesViewModel
+import com.prayertimesApp.ui.theme.ActivePrayerBg
+import com.prayertimesApp.ui.theme.AmberAccent
+import com.prayertimesApp.ui.theme.BorderColor
+import com.prayertimesApp.ui.theme.DeepTeal
+import com.prayertimesApp.ui.theme.WarmCreame
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

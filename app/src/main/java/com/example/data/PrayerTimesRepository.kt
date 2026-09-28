@@ -1,10 +1,10 @@
-package com.example.data
+package com.prayertimesApp.data
 
 import android.content.Context
 import android.util.Log
-import com.example.data.api.AladhanApi
-import com.example.data.api.NetworkModule
-import com.example.data.api.TimingsResponse
+import com.prayertimesApp.data.api.AladhanApi
+import com.prayertimesApp.data.api.NetworkModule
+import com.prayertimesApp.data.api.TimingsResponse
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -65,7 +65,9 @@ class PrayerTimesRepository private constructor(context: Context) {
         longitude: Double,
         method: PrayerCalculationMethod,
         madhab: PrayerMadhab,
-        date: Date = Date()
+        date: Date = Date(),
+        is24HourFormat: Boolean = false,
+        highLatitudeRule: AppHighLatitudeRule = AppHighLatitudeRule.MIDDLE_OF_THE_NIGHT
     ): FetchResult = withContext(Dispatchers.IO) {
         val cacheKey = buildDailyKey(latitude, longitude, method, madhab, date)
         val cachedJson = prefs.getString(cacheKey, null)
@@ -74,7 +76,7 @@ class PrayerTimesRepository private constructor(context: Context) {
                 val cached = dailyAdapter.fromJson(cachedJson)
                 if (cached != null) {
                     return@withContext FetchResult.Success(
-                        items = toPrayerTimeItems(cached.timings, date),
+                        items = toPrayerTimeItems(cached.timings, date, is24HourFormat),
                         source = Source.CACHE,
                         hijriDate = formatHijriFromApi(cached.date)
                     )
@@ -99,7 +101,7 @@ class PrayerTimesRepository private constructor(context: Context) {
                 .putLong(cacheKey + "_ts", System.currentTimeMillis())
                 .apply()
             FetchResult.Success(
-                items = toPrayerTimeItems(response.timings, date),
+                items = toPrayerTimeItems(response.timings, date, is24HourFormat),
                 source = Source.NETWORK,
                 hijriDate = formatHijriFromApi(response.date)
             )
@@ -107,7 +109,7 @@ class PrayerTimesRepository private constructor(context: Context) {
             Log.w(TAG, "Aladhan HTTP ${e.code()}; falling back to local calc", e)
             FetchResult.Failure(
                 items = PrayerTimesCalculator.calculateTimes(
-                    latitude, longitude, method.method, madhab.madhab, date
+                    latitude, longitude, method.method, madhab.madhab, date, is24HourFormat, highLatitudeRule
                 ),
                 error = "Server error ${e.code()}, used offline calculation."
             )
@@ -115,7 +117,7 @@ class PrayerTimesRepository private constructor(context: Context) {
             Log.w(TAG, "Aladhan network error; falling back to local calc", e)
             FetchResult.Failure(
                 items = PrayerTimesCalculator.calculateTimes(
-                    latitude, longitude, method.method, madhab.madhab, date
+                    latitude, longitude, method.method, madhab.madhab, date, is24HourFormat, highLatitudeRule
                 ),
                 error = "Offline mode: using local calculation."
             )
@@ -123,7 +125,7 @@ class PrayerTimesRepository private constructor(context: Context) {
             Log.e(TAG, "Aladhan unexpected error; falling back to local calc", e)
             FetchResult.Failure(
                 items = PrayerTimesCalculator.calculateTimes(
-                    latitude, longitude, method.method, madhab.madhab, date
+                    latitude, longitude, method.method, madhab.madhab, date, is24HourFormat, highLatitudeRule
                 ),
                 error = "Network unavailable, used offline calculation."
             )
@@ -184,10 +186,12 @@ class PrayerTimesRepository private constructor(context: Context) {
     // --- helpers ---
 
     private fun toPrayerTimeItems(
-        timings: com.example.data.api.Timings,
-        date: Date
+        timings: com.prayertimesApp.data.api.Timings,
+        date: Date,
+        is24HourFormat: Boolean = false
     ): List<PrayerTimeItem> {
-        val df = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        val timePattern = if (is24HourFormat) "HH:mm" else "hh:mm a"
+        val df = SimpleDateFormat(timePattern, Locale.getDefault())
         val tz = TimeZone.getDefault()
         df.timeZone = tz
 
@@ -244,7 +248,7 @@ class PrayerTimesRepository private constructor(context: Context) {
         return cal.time
     }
 
-    private fun formatHijriFromApi(date: com.example.data.api.AladhanDate): String? {
+    private fun formatHijriFromApi(date: com.prayertimesApp.data.api.AladhanDate): String? {
         return try {
             val hijri = date.hijri
             val day = hijri.day

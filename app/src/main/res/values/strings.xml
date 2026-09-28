@@ -26,4 +26,26 @@
     <string name="no_location_subtitle">Add your first city to see prayer times</string>
     <string name="no_locations_saved">No locations saved yet.</string>
     <string name="no_locations_hint">Tap the + button to add your first city.</string>
+
+    <!-- Settings Screen String Resources -->
+    <string name="fiqh_settings_header">CALCULATION &amp; FIQH</string>
+    <string name="madhab_title">Asr Calculation (Madhab)</string>
+    <string name="madhab_subtitle">Select juristic method for Asr prayer</string>
+    <string name="hijri_offset_title">Hijri Date Adjustment</string>
+    <string name="hijri_offset_subtitle">Manual ± days offset for local moon sightings</string>
+    <string name="high_latitude_title">High Latitude Rule</string>
+    <string name="high_latitude_subtitle">Adjust calculation for extreme latitudes</string>
+
+    <string name="display_settings_header">DISPLAY &amp; TIME FORMAT</string>
+    <string name="time_format_title">24-Hour Time Format</string>
+    <string name="time_format_subtitle">Toggle between 12-hour AM/PM and 24-hour display</string>
+
+    <string name="notification_settings_header">NOTIFICATIONS &amp; REMINDERS</string>
+    <string name="pre_prayer_warning_title">Pre-Adhan Warning</string>
+    <string name="pre_prayer_warning_subtitle">Reminder alert before prayer time</string>
+
+    <string name="about_settings_header">ABOUT &amp; ENGINE CREDITS</string>
+    <string name="about_app_title">About Prayer Times</string>
+    <string name="about_app_subtitle">Version 1.0.0 • Batoul Apps Adhan Engine &amp; Aladhan API</string>
 </resources>
+

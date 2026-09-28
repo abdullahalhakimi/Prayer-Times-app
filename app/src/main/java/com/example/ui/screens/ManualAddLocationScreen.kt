@@ -1,4 +1,4 @@
-package com.example.ui.screens
+package com.prayertimesApp.ui.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,12 +19,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.batoulapps.adhan.CalculationMethod
-import com.example.data.City
-import com.example.data.Country
-import com.example.data.CityRepository
-import com.example.data.CountryCityProvider
-import com.example.ui.theme.DeepTeal
-import com.example.ui.theme.WarmCreame
+import com.prayertimesApp.data.City
+import com.prayertimesApp.data.Country
+import com.prayertimesApp.data.CityRepository
+import com.prayertimesApp.data.CountryCityProvider
+import com.prayertimesApp.ui.theme.DeepTeal
+import com.prayertimesApp.ui.theme.WarmCreame
 import kotlinx.coroutines.delay
 
 enum class ManualStep {

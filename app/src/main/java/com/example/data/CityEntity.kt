@@ -1,4 +1,4 @@
-package com.example.data
+package com.prayertimesApp.data
 
 import androidx.room.Entity
 

@@ -1,4 +1,4 @@
-package com.example
+package com.prayertimesApp
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -51,24 +51,24 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.batoulapps.adhan.Madhab
-import com.example.ui.CompassViewModel
-import com.example.ui.PrayerTimesViewModel
+import com.prayertimesApp.ui.CompassViewModel
+import com.prayertimesApp.ui.PrayerTimesViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import com.example.ui.screens.AgendaScreen
-import com.example.ui.screens.HijriScreen
-import com.example.ui.screens.LocationsScreen
-import com.example.ui.screens.ManualAddLocationScreen
-import com.example.ui.screens.PrayersScreen
-import com.example.ui.screens.QiblaScreen
-import com.example.ui.screens.SettingsScreen
-import com.example.ui.theme.ActivePrayerBg
-import com.example.ui.theme.AmberAccent
-import com.example.ui.theme.BorderColor
-import com.example.ui.theme.DeepTeal
-import com.example.ui.theme.InactiveTextColor
-import com.example.ui.theme.MyApplicationTheme
+import com.prayertimesApp.ui.screens.AgendaScreen
+import com.prayertimesApp.ui.screens.HijriScreen
+import com.prayertimesApp.ui.screens.LocationsScreen
+import com.prayertimesApp.ui.screens.ManualAddLocationScreen
+import com.prayertimesApp.ui.screens.PrayersScreen
+import com.prayertimesApp.ui.screens.QiblaScreen
+import com.prayertimesApp.ui.screens.SettingsScreen
+import com.prayertimesApp.ui.theme.ActivePrayerBg
+import com.prayertimesApp.ui.theme.AmberAccent
+import com.prayertimesApp.ui.theme.BorderColor
+import com.prayertimesApp.ui.theme.DeepTeal
+import com.prayertimesApp.ui.theme.InactiveTextColor
+import com.prayertimesApp.ui.theme.MyApplicationTheme
 import android.graphics.Color as AndroidColor
 
 sealed class Screen(val route: String, @StringRes val titleResId: Int, val icon: ImageVector) {
@@ -166,7 +166,7 @@ fun MainAppContainer() {
                 onDismiss = { /* no-op: mandatory */ },
                 onAdd = { name, lat, lon, method ->
                     viewModel.addLocation(name, lat, lon, method, Madhab.SHAFI)
-                    val newConfig = com.example.data.LocationConfig(
+                    val newConfig = com.prayertimesApp.data.LocationConfig(
                         id = java.util.UUID.randomUUID().toString(),
                         name = name,
                         latitude = lat,
@@ -274,6 +274,7 @@ fun MainAppContainer() {
             }
             composable(Screen.Settings.route) {
                 SettingsScreen(
+                    viewModel = viewModel,
                     onNavigateToLocations = { navController.navigate(Screen.Locations.route) }
                 )
             }

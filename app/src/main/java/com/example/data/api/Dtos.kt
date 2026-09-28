@@ -1,4 +1,4 @@
-package com.example.data.api
+package com.prayertimesApp.data.api
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass

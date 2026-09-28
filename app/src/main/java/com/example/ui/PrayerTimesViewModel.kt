@@ -1,4 +1,4 @@
-package com.example.ui
+package com.prayertimesApp.ui
 
 import android.app.Application
 import android.content.Context
@@ -6,12 +6,12 @@ import android.location.Geocoder
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import com.example.R
+import com.prayertimesApp.R
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.batoulapps.adhan.CalculationMethod
 import com.batoulapps.adhan.Madhab
-import com.example.data.*
+import com.prayertimesApp.data.*
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.Job
@@ -66,6 +66,19 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
 
     private val _currentMadhab = MutableStateFlow(Madhab.SHAFI)
     val currentMadhab: StateFlow<Madhab> = _currentMadhab
+
+    // New Settings State
+    private val _is24HourFormat = MutableStateFlow(false)
+    val is24HourFormat: StateFlow<Boolean> = _is24HourFormat
+
+    private val _hijriDayOffset = MutableStateFlow(0)
+    val hijriDayOffset: StateFlow<Int> = _hijriDayOffset
+
+    private val _prePrayerReminderMinutes = MutableStateFlow(10)
+    val prePrayerReminderMinutes: StateFlow<Int> = _prePrayerReminderMinutes
+
+    private val _highLatitudeRule = MutableStateFlow(AppHighLatitudeRule.MIDDLE_OF_THE_NIGHT)
+    val highLatitudeRule: StateFlow<AppHighLatitudeRule> = _highLatitudeRule
 
     // Track whether any locations have been saved
     private val _hasLocations = MutableStateFlow(false)
@@ -153,9 +166,23 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
         initEvents()
         initNotificationStates()
 
+        // Restore saved settings & preferences
+        val sharedPrefs = application.getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
+        _is24HourFormat.value = sharedPrefs.getBoolean("is_24_hour_format", false)
+        _hijriDayOffset.value = sharedPrefs.getInt("hijri_day_offset", 0)
+        _prePrayerReminderMinutes.value = sharedPrefs.getInt("pre_prayer_reminder_mins", 10)
+        
+        val savedMadhabStr = sharedPrefs.getString("current_madhab", null)
+        if (savedMadhabStr != null) {
+            try { _currentMadhab.value = Madhab.valueOf(savedMadhabStr) } catch (_: Exception) {}
+        }
+        val savedRuleStr = sharedPrefs.getString("high_latitude_rule", null)
+        if (savedRuleStr != null) {
+            try { _highLatitudeRule.value = AppHighLatitudeRule.valueOf(savedRuleStr) } catch (_: Exception) {}
+        }
+
         // Restore saved location if available
         if (_hasLocations.value) {
-            val sharedPrefs = application.getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
             val savedLocName = sharedPrefs.getString("saved_location", null)
             val savedConfig = savedLocName?.let { name ->
                 _locationsList.value.find { it.name == name }
@@ -342,7 +369,9 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
                 latitude = _currentLatitude.value,
                 longitude = _currentLongitude.value,
                 method = currentPrayerMethod,
-                madhab = currentPrayerMadhab
+                madhab = currentPrayerMadhab,
+                is24HourFormat = _is24HourFormat.value,
+                highLatitudeRule = _highLatitudeRule.value
             )
             when (result) {
                 is PrayerTimesRepository.FetchResult.Success -> {
@@ -436,7 +465,9 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
                 latitude = _currentLatitude.value,
                 longitude = _currentLongitude.value,
                 method = currentPrayerMethod,
-                madhab = currentPrayerMadhab
+                madhab = currentPrayerMadhab,
+                is24HourFormat = _is24HourFormat.value,
+                highLatitudeRule = _highLatitudeRule.value
             )
             when (result) {
                 is PrayerTimesRepository.FetchResult.Success -> {
@@ -511,13 +542,50 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    // --- Settings Mutators ---
+
+    fun toggle24HourFormat(enabled: Boolean) {
+        _is24HourFormat.value = enabled
+        val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
+        sharedPrefs.edit { putBoolean("is_24_hour_format", enabled) }
+        recalculate()
+    }
+
+    fun setMadhab(madhab: Madhab) {
+        _currentMadhab.value = madhab
+        val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
+        sharedPrefs.edit { putString("current_madhab", madhab.name) }
+        recalculate()
+    }
+
+    fun setHijriDayOffset(offset: Int) {
+        _hijriDayOffset.value = offset
+        val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
+        sharedPrefs.edit { putInt("hijri_day_offset", offset) }
+        recalculate()
+    }
+
+    fun setPrePrayerReminderMinutes(minutes: Int) {
+        _prePrayerReminderMinutes.value = minutes
+        val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
+        sharedPrefs.edit { putInt("pre_prayer_reminder_mins", minutes) }
+    }
+
+    fun setHighLatitudeRule(rule: AppHighLatitudeRule) {
+        _highLatitudeRule.value = rule
+        val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
+        sharedPrefs.edit { putString("high_latitude_rule", rule.name) }
+        recalculate()
+    }
+
     /**
      * Converts a LocalDate to formatted Hijri string (Native Chronology)
      */
     @RequiresApi(Build.VERSION_CODES.O)
     fun formatHijriDate(localDate: LocalDate): String {
         return try {
-            val hijrahDate = HijrahDate.from(localDate)
+            val adjustedDate = localDate.plusDays(_hijriDayOffset.value.toLong())
+            val hijrahDate = HijrahDate.from(adjustedDate)
             val monthNames = arrayOf(
                 "Muharram", "Safar", "Rabi' al-Awwal", "Rabi' al-Thani",
                 "Jumada al-Awwal", "Jumada al-Thani", "Rajab", "Sha'ban",
@@ -538,10 +606,11 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
     @RequiresApi(Build.VERSION_CODES.O)
     fun getHijriDay(localDate: LocalDate): Int {
         return try {
-            val hijrahDate = HijrahDate.from(localDate)
+            val adjustedDate = localDate.plusDays(_hijriDayOffset.value.toLong())
+            val hijrahDate = HijrahDate.from(adjustedDate)
             hijrahDate.get(ChronoField.DAY_OF_MONTH)
         } catch (e: Exception) {
-            (localDate.dayOfMonth + 12) % 30 + 1 // pseudo fallback
+            ((localDate.dayOfMonth + 12 + _hijriDayOffset.value) % 30).let { if (it <= 0) it + 30 else it }
         }
     }
 

@@ -1,6 +1,6 @@
-package com.example.data.api
+package com.prayertimesApp.data.api
 
-import com.example.BuildConfig
+import com.prayertimesApp.BuildConfig
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.OkHttpClient
