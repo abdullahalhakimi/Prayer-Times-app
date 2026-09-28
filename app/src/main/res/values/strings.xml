@@ -44,8 +44,10 @@
     <string name="pre_prayer_warning_title">Pre-Adhan Warning</string>
     <string name="pre_prayer_warning_subtitle">Reminder alert before prayer time</string>
 
-    <string name="about_settings_header">ABOUT &amp; ENGINE CREDITS</string>
+    <string name="about_settings_header">ABOUT &amp; LEGAL</string>
     <string name="about_app_title">About Prayer Times</string>
     <string name="about_app_subtitle">Version 1.0.0 • Batoul Apps Adhan Engine &amp; Aladhan API</string>
+    <string name="privacy_policy_title">Privacy Policy</string>
+    <string name="privacy_policy_subtitle">Read how we protect your location and sensitive data</string>
 </resources>
 

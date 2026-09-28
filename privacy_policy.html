@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Prayer Times & Qibla Compass</title>
+    <style>
+        :root {
+            --primary-color: #1E4646;
+            --accent-color: #DF9F2D;
+            --bg-color: #F4F1EA;
+            --surface-color: #FFFFFF;
+            --text-primary: #1B2C2C;
+            --text-secondary: #526666;
+            --border-color: #E2DDD3;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: #FFFFFF;
+            padding: 40px 20px;
+            text-align: center;
+            border-bottom: 4px solid var(--accent-color);
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        header p {
+            color: #D1E0E0;
+            font-size: 1rem;
+        }
+
+        .container {
+            max-width: 860px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: var(--surface-color);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+
+        .meta-info {
+            background-color: rgba(30, 70, 70, 0.05);
+            border-left: 4px solid var(--primary-color);
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-bottom: 24px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            font-size: 1.4rem;
+            margin-top: 24px;
+            margin-bottom: 12px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 6px;
+        }
+
+        h2:first-of-type {
+            margin-top: 0;
+        }
+
+        p, ul {
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        ul {
+            padding-left: 24px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: var(--primary-color);
+        }
+
+        .highlight-box {
+            background-color: rgba(223, 159, 45, 0.1);
+            border: 1px solid rgba(223, 159, 45, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+
+        .highlight-box h3 {
+            color: #B87B10;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 40px;
+        }
+
+        a {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        a:hover {
+            color: var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Privacy Policy</h1>
+    <p>Prayer Times & Qibla Compass Application</p>
+</header>
+
+<div class="container">
+    <div class="card">
+        <div class="meta-info">
+            <strong>Effective Date:</strong> February 18, 2025 | <strong>Last Updated:</strong> February 18, 2025
+        </div>
+
+        <p>
+            Welcome to <strong>Prayer Times & Qibla Compass</strong> ("we," "our," or "the App"). We are committed to protecting your privacy and providing a safe, transparent user experience. This Privacy Policy outlines how our application collects, uses, processes, and protects your information when you use our mobile application.
+        </p>
+
+        <div class="highlight-box">
+            <h3>🔒 Core Privacy Commitment</h3>
+            <p style="margin-bottom:0;">
+                Our application does <strong>NOT</strong> collect personal identification information (such as your name, email address, phone number, or contacts), does <strong>NOT</strong> sell user data, and contains <strong>ZERO third-party advertising or tracking SDKs</strong>.
+            </p>
+        </div>
+
+        <h2>1. Information We Access & Collect</h2>
+
+        <p>To provide accurate prayer time calculations, notification reminders, and Qibla direction indicators, our App requests access to specific device features and permissions:</p>
+
+        <ul>
+            <li>
+                <strong>Location Data (Precise & Coarse Location):</strong>
+                <br>
+                <em>Permissions requested:</em> <code>ACCESS_FINE_LOCATION</code>, <code>ACCESS_COARSE_LOCATION</code>.
+                <br>
+                <em>Usage:</em> Your device's geographic coordinates (latitude and longitude) are accessed solely to calculate precise daily prayer times (Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha) for your current position and to determine the accurate Qibla angle pointing toward Makkah. Location calculations occur locally on your device or via secure API queries. Location data is never stored on external servers or linked to your personal identity.
+            </li>
+            <li>
+                <strong>Notifications & Reminders:</strong>
+                <br>
+                <em>Permissions requested:</em> <code>POST_NOTIFICATIONS</code>, <code>SCHEDULE_EXACT_ALARM</code>.
+                <br>
+                <em>Usage:</em> Required to schedule and deliver pre-Adhan warning alerts, prayer time notifications, and Suhoor alarms. All notifications are scheduled locally on your device.
+            </li>
+            <li>
+                <strong>Network Access:</strong>
+                <br>
+                <em>Permissions requested:</em> <code>INTERNET</code>, <code>ACCESS_NETWORK_STATE</code>.
+                <br>
+                <em>Usage:</em> Used to fetch city names during location searches, retrieve updated monthly prayer schedules from the public Aladhan REST API, and verify network connectivity.
+            </li>
+        </ul>
+
+        <h2>2. How We Use Information</h2>
+        <p>The information accessed by the App is strictly used for the following operational purposes:</p>
+        <ul>
+            <li>Calculating exact daily prayer schedules based on chosen calculation methods and juristic preferences (Madhab).</li>
+            <li>Displaying the Qibla compass direction using on-device magnetometer/orientation sensors.</li>
+            <li>Scheduling local notification alerts and Suhoor alarms.</li>
+            <li>Saving your selected city preferences locally in your device's internal application storage.</li>
+        </ul>
+
+        <h2>3. Data Sharing & Third-Party Services</h2>
+        <p>We do not sell, rent, trade, or share your data with any third parties for marketing or commercial purposes. The App integrates with the following trusted open/technical services strictly for calculation purposes:</p>
+        <ul>
+            <li>
+                <strong>Batoul Apps Adhan Engine:</strong> An open-source, on-device calculation library used for offline astronomical prayer time computation. No data is transmitted externally by this engine.
+            </li>
+            <li>
+                <strong>Aladhan REST API:</strong> Used over secure encrypted HTTPS connections to retrieve public prayer calendar data and city geocoding parameters. Queries sent to the API contain only spatial coordinates or city names required for calculation and do not contain personal identifiers.
+            </li>
+        </ul>
+
+        <h2>4. Data Storage & User Control</h2>
+        <p>
+            All application preferences, saved cities, and notification settings are stored locally on your device using Android's encrypted Room database. You retain full control over your data:
+        </p>
+        <ul>
+            <li>You can add, edit, or delete saved cities at any time within the <em>Locations</em> screen.</li>
+            <li>You can revoke Location or Notification permissions at any time through your Android device's <em>System Settings > Apps > Prayer Times > Permissions</em>.</li>
+            <li>Clearing the App's data or uninstalling the App permanently removes all stored preferences from your device.</li>
+        </ul>
+
+        <h2>5. Children's Privacy</h2>
+        <p>
+            Our application is suitable for general audiences of all ages (Content Rating: Everyone 3+). We do not knowingly collect, request, or solicit any personal information from children under the age of 13 (or under 16 in certain jurisdictions).
+        </p>
+
+        <h2>6. Security</h2>
+        <p>
+            We prioritize the security of your information. All external API requests are performed over encrypted SSL/TLS (HTTPS) connections. Because we do not maintain user accounts or central databases containing personal information, your risk of data exposure is minimized.
+        </p>
+
+        <h2>7. Changes to This Privacy Policy</h2>
+        <p>
+            We may update our Privacy Policy periodically to reflect app updates or regulatory changes. Any modifications will be posted on this page with an updated "Effective Date."
+        </p>
+
+        <h2>8. Contact Us</h2>
+        <p>
+            If you have any questions, suggestions, or concerns regarding this Privacy Policy or our privacy practices, please contact us at:
+        </p>
+        <p style="margin-left: 16px;">
+            📧 <strong>Email:</strong> support@prayertimesapp.com<br>
+            🌐 <strong>Website:</strong> <a href="https://prayertimesapp.com" target="_blank">https://prayertimesapp.com</a>
+        </p>
+    </div>
+</div>
+
+<footer>
+    &copy; 2025 Prayer Times & Qibla Compass. All rights reserved.
+</footer>
+
+</body>
+</html>

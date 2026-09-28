@@ -1,8 +1,17 @@
 package com.prayertimesApp.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,12 +26,33 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Public
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -55,6 +85,8 @@ fun SettingsScreen(
     var showHighLatDialog by remember { mutableStateOf(false) }
     var showPrePrayerDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
+    var showPrivacyDialog by remember { mutableStateOf(false) }
+    val uriHandler = LocalUriHandler.current
 
     val scrollState = rememberScrollState()
 
@@ -179,6 +211,13 @@ fun SettingsScreen(
                 subtitle = stringResource(R.string.about_app_subtitle),
                 onClick = { showAboutDialog = true }
             )
+
+            SettingsItem(
+                icon = Icons.Default.Security,
+                title = stringResource(R.string.privacy_policy_title),
+                subtitle = stringResource(R.string.privacy_policy_subtitle),
+                onClick = { showPrivacyDialog = true }
+            )
             
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -284,7 +323,7 @@ fun SettingsScreen(
             title = { Text("High Latitude Rule", fontWeight = FontWeight.Bold, color = DeepTeal) },
             text = {
                 Column {
-                    AppHighLatitudeRule.values().forEach { rule ->
+                    AppHighLatitudeRule.entries.forEach { rule ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
@@ -377,6 +416,49 @@ fun SettingsScreen(
             confirmButton = {
                 TextButton(onClick = { showAboutDialog = false }) {
                     Text("OK", color = DeepTeal, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
+    }
+
+    if (showPrivacyDialog) {
+        AlertDialog(
+            onDismissRequest = { showPrivacyDialog = false },
+            title = { Text("Privacy Policy", fontWeight = FontWeight.Bold, color = DeepTeal) },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.verticalScroll(rememberScrollState())
+                ) {
+                    Text("Your Privacy Matters", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = DeepTeal)
+                    Text("Prayer Times is designed with privacy at its core. We do NOT collect personal information, sell user data, or run third-party advertising trackers.", fontSize = 12.sp, color = Color.DarkGray)
+                    
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    
+                    Text("Data & Permissions Usage:", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = DeepTeal)
+                    Text("• Location: Used locally to calculate daily prayer times and Qibla direction for your position.", fontSize = 12.sp, color = Color.DarkGray)
+                    Text("• Notifications & Alarms: Used to deliver pre-Adhan warning alerts and Suhoor alarms.", fontSize = 12.sp, color = Color.DarkGray)
+                    Text("• Storage: Selected cities and preferences are stored locally on your device.", fontSize = 12.sp, color = Color.DarkGray)
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    Text("Website / Full Online Policy:", fontSize = 11.sp, color = Color.Gray)
+                    Text("https://abdullahalhakimi.github.io/prayer-times-app/privacy_policy.html", fontSize = 12.sp, color = AmberAccent, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showPrivacyDialog = false
+                    try {
+                        uriHandler.openUri("https://abdullahalhakimi.github.io/prayer-times-app/privacy_policy.html")
+                    } catch (_: Exception) {}
+                }) {
+                    Text("Open Web Page", color = AmberAccent, fontWeight = FontWeight.Bold)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showPrivacyDialog = false }) {
+                    Text("Close", color = DeepTeal, fontWeight = FontWeight.Bold)
                 }
             }
         )
