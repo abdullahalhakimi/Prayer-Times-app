@@ -1,4 +1,4 @@
-package com.example.data
+package com.prayertimesApp.data
 
 import android.app.NotificationChannel
 import android.app.NotificationManager

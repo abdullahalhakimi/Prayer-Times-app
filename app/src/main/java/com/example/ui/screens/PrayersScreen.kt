@@ -1,4 +1,4 @@
-package com.example.ui.screens
+package com.prayertimesApp.ui.screens
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -7,6 +7,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,21 +26,32 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.NightsStay
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,20 +64,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
-import com.example.R
-import com.example.data.PrayerTimeItem
-import com.example.ui.NotificationType
-import com.example.ui.PrayerTimesViewModel
-import com.example.ui.theme.ActivePrayerBg
-import com.example.ui.theme.AmberAccent
-import com.example.ui.theme.BorderColor
-import com.example.ui.theme.DeepTeal
-import com.example.ui.theme.WarmCreame
+import com.prayertimesApp.R
+import com.prayertimesApp.data.PrayerTimeItem
+import com.prayertimesApp.ui.NotificationType
+import com.prayertimesApp.ui.PrayerTimesViewModel
+import com.prayertimesApp.ui.theme.ActivePrayerBg
+import com.prayertimesApp.ui.theme.AmberAccent
+import com.prayertimesApp.ui.theme.BorderColor
+import com.prayertimesApp.ui.theme.DeepTeal
+import com.prayertimesApp.ui.theme.WarmCreame
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrayersScreen(
+    modifier: Modifier = Modifier,
     viewModel: PrayerTimesViewModel,
-    modifier: Modifier = Modifier
+    onNavigateToLocations: () -> Unit = {},
 ) {
     val locationName by viewModel.currentLocationName.collectAsState()
     val upcomingPrayer by viewModel.upcomingPrayerName.collectAsState()
@@ -74,6 +88,11 @@ fun PrayersScreen(
     val prayerTimes by viewModel.prayerTimes.collectAsState()
     val notificationSettings by viewModel.prayerNotifications.collectAsState()
     val isDayTime by viewModel.isDayTime.collectAsState()
+    val sourceLabel by viewModel.sourceLabel.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val hasLocations by viewModel.hasLocations.collectAsState()
+    val locationsList by viewModel.locationsList.collectAsState()
+    var showLocationSheet by remember { mutableStateOf(false) }
 
     // Rotating pulse animation for sun/moon graphic
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
@@ -115,7 +134,9 @@ fun PrayersScreen(
                 Spacer(modifier = Modifier.height(5.dp))
                 // Location header
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showLocationSheet = true },
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Start,
                 ) {
@@ -233,20 +254,149 @@ fun PrayersScreen(
                 .weight(2.2f)
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(prayerTimes) { prayer ->
-                    val notificationType = notificationSettings[prayer.name] ?: NotificationType.SILENT
-                    val isActive = upcomingPrayer == prayer.name.uppercase()
+            if (prayerTimes.isEmpty() && !hasLocations) {
+                // No locations set — show placeholder
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = null,
+                            tint = DeepTeal.copy(alpha = 0.3f),
+                            modifier = Modifier.size(56.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = stringResource(R.string.no_location_title),
+                            color = DeepTeal,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.no_location_subtitle),
+                            color = Color.Gray,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(prayerTimes) { prayer ->
+                        val notificationType = notificationSettings[prayer.name] ?: NotificationType.SILENT
+                        val isActive = upcomingPrayer == prayer.name.uppercase()
 
-                    PrayerTimeItemRow(
-                        prayer = prayer,
-                        notificationType = notificationType,
-                        isActive = isActive,
-                        onToggleNotification = { viewModel.togglePrayerNotification(prayer.name) }
+                        PrayerTimeItemRow(
+                            prayer = prayer,
+                            notificationType = notificationType,
+                            isActive = isActive,
+                            onToggleNotification = { viewModel.togglePrayerNotification(prayer.name) }
+                        )
+                    }
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 6.dp, bottom = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "Source: $sourceLabel",
+                                color = DeepTeal.copy(alpha = 0.55f),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            IconButton(
+                                onClick = { viewModel.forceRefresh() },
+                                enabled = !isLoading
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "Refresh prayer times",
+                                    tint = DeepTeal.copy(alpha = if (isLoading) 0.3f else 0.8f),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showLocationSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showLocationSheet = false },
+            containerColor = Color.White
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+                    .padding(bottom = 32.dp)
+            ) {
+                Text(
+                    text = "Switch Location",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DeepTeal
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                locationsList.forEach { config ->
+                    val isSelected = config.name.equals(locationName, ignoreCase = true)
+                    ListItem(
+                        headlineContent = {
+                            Text(
+                                text = config.name,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSelected) DeepTeal else Color(0xFF333333)
+                            )
+                        },
+                        leadingContent = {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = null,
+                                tint = if (isSelected) AmberAccent else Color.Gray,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        },
+                        trailingContent = {
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Selected",
+                                    tint = AmberAccent,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        },
+                        modifier = Modifier.clickable {
+                            viewModel.selectLocationAndSync(config)
+                            showLocationSheet = false
+                        }
                     )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = Color.LightGray.copy(alpha = 0.5f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+                TextButton(onClick = {
+                    showLocationSheet = false
+                    onNavigateToLocations()
+                }) {
+                    Text("Manage locations", color = DeepTeal)
                 }
             }
         }

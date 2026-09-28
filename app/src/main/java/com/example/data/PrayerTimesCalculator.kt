@@ -1,4 +1,4 @@
-package com.example.data
+package com.prayertimesApp.data
 
 import com.batoulapps.adhan.Coordinates
 import com.batoulapps.adhan.CalculationMethod
@@ -18,12 +18,43 @@ enum class PrayerCalculationMethod(val displayName: String, val method: Calculat
     KUWAIT("Kuwait", CalculationMethod.KUWAIT),
     QATAR("Qatar", CalculationMethod.QATAR),
     SINGAPORE("Singapore", CalculationMethod.SINGAPORE),
-    TURKEY("Turkey", CalculationMethod.TURKEY)
+    TURKEY("Turkey", CalculationMethod.TURKEY);
+
+    /**
+     * Aladhan API calculation method id.
+     * https://api.aladhan.com/v1/methods
+     */
+    val aladhanId: Int
+        get() = when (this) {
+            KARACHI -> 1
+            NORTH_AMERICA -> 2
+            MUSLIM_WORLD_LEAGUE -> 3
+            UMM_AL_QURA -> 4
+            EGYPTIAN -> 5
+            KUWAIT -> 7
+            MOONSIGHTING_COMMITTEE -> 9
+            QATAR -> 10
+            SINGAPORE -> 11
+            TURKEY -> 13
+        }
 }
 
 enum class PrayerMadhab(val displayName: String, val madhab: Madhab) {
     STANDARD("Shafi, Maliki, Hanbali (Standard)", Madhab.SHAFI),
-    HANAFI("Hanafi", Madhab.HANAFI)
+    HANAFI("Hanafi", Madhab.HANAFI);
+
+    /** Aladhan school id: 0 = Shafi, 1 = Hanafi. */
+    val aladhanSchool: Int
+        get() = when (this) {
+            STANDARD -> 0
+            HANAFI -> 1
+        }
+}
+
+enum class AppHighLatitudeRule(val displayName: String) {
+    MIDDLE_OF_THE_NIGHT("Middle of the Night"),
+    SEVENTH_OF_THE_NIGHT("Seventh of the Night"),
+    TWILIGHT_ANGLE("Twilight Angle")
 }
 
 data class PrayerTimeItem(
@@ -42,7 +73,9 @@ object PrayerTimesCalculator {
         longitude: Double,
         method: CalculationMethod,
         madhab: Madhab,
-        date: Date = Date()
+        date: Date = Date(),
+        is24HourFormat: Boolean = false,
+        highLatitudeRule: AppHighLatitudeRule = AppHighLatitudeRule.MIDDLE_OF_THE_NIGHT
     ): List<PrayerTimeItem> {
         val coordinates = Coordinates(latitude, longitude)
         val calendar = Calendar.getInstance().apply { time = date }
@@ -60,15 +93,12 @@ object PrayerTimesCalculator {
         val prayerTimes = PrayerTimes(coordinates, dateComponents, parameters)
         
         // Calculate Qiyam (traditionally last 1/3 of the night, or halfway between sunset/Maghrib and Fajr of the next day)
-        // Here we'll do halfway between Maghrib and Fajr of next day, or simplified to 11:30 PM / calculated relative to midnight
         val maghribTime = prayerTimes.maghrib()
         val fajrTime = prayerTimes.fajr()
         
         val qiyamTime = if (maghribTime != null && fajrTime != null) {
-            // Halfway or default
             val calMaghrib = Calendar.getInstance().apply { time = maghribTime }
             val calFajr = Calendar.getInstance().apply { time = fajrTime }
-            // Fajr is next day, so add 1 day if necessary
             if (calFajr.before(calMaghrib)) {
                 calFajr.add(Calendar.DATE, 1)
             }
@@ -76,7 +106,6 @@ object PrayerTimesCalculator {
             val qiyamMillis = calMaghrib.timeInMillis + (diff * 2 / 3) // last third of night starts
             Date(qiyamMillis)
         } else {
-            // Fallback qiyam is 11:45 PM of current day
             val fallback = Calendar.getInstance().apply {
                 time = date
                 set(Calendar.HOUR_OF_DAY, 23)
@@ -86,7 +115,8 @@ object PrayerTimesCalculator {
             fallback.time
         }
 
-        val df = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault())
+        val timePattern = if (is24HourFormat) "HH:mm" else "hh:mm a"
+        val df = java.text.SimpleDateFormat(timePattern, java.util.Locale.getDefault())
 
         val list = mutableListOf<PrayerTimeItem>()
         prayerTimes.fajr()?.let { list.add(PrayerTimeItem("Fajr", it, df.format(it))) }
@@ -100,3 +130,4 @@ object PrayerTimesCalculator {
         return list
     }
 }
+

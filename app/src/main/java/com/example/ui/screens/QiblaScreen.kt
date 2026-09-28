@@ -1,4 +1,4 @@
-package com.example.ui.screens
+package com.prayertimesApp.ui.screens
 
 import android.content.Intent
 import android.provider.Settings
@@ -59,11 +59,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ui.CompassViewModel
-import com.example.ui.theme.AmberAccent
-import com.example.ui.theme.BorderColor
-import com.example.ui.theme.DeepTeal
-import com.example.ui.theme.WarmCreame
+import com.prayertimesApp.ui.CompassViewModel
+import com.prayertimesApp.ui.theme.AmberAccent
+import com.prayertimesApp.ui.theme.BorderColor
+import com.prayertimesApp.ui.theme.DeepTeal
+import com.prayertimesApp.ui.theme.WarmCreame
 import kotlin.math.cos
 import kotlin.math.sin
 

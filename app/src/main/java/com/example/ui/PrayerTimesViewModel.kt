@@ -1,4 +1,4 @@
-package com.example.ui
+package com.prayertimesApp.ui
 
 import android.app.Application
 import android.content.Context
@@ -6,12 +6,12 @@ import android.location.Geocoder
 import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import com.example.R
+import com.prayertimesApp.R
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.batoulapps.adhan.CalculationMethod
 import com.batoulapps.adhan.Madhab
-import com.example.data.*
+import com.prayertimesApp.data.*
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.Job
@@ -29,6 +29,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlin.time.Duration.Companion.milliseconds
+import androidx.core.content.edit
 
 enum class NotificationType(val label: String) {
     SILENT("Silent"),
@@ -48,13 +49,13 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
     private val scheduler = SuhoorAlarmScheduler(application)
 
     // Current location configurations
-    private val _currentLocationName = MutableStateFlow("City of London")
+    private val _currentLocationName = MutableStateFlow("")
     val currentLocationName: StateFlow<String> = _currentLocationName
 
-    private val _currentLatitude = MutableStateFlow(51.5074)
+    private val _currentLatitude = MutableStateFlow(0.0)
     val currentLatitude: StateFlow<Double> = _currentLatitude
 
-    private val _currentLongitude = MutableStateFlow(-0.1278)
+    private val _currentLongitude = MutableStateFlow(0.0)
     val currentLongitude: StateFlow<Double> = _currentLongitude
 
     private val _isLocationEnabled = MutableStateFlow(true)
@@ -66,9 +67,61 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
     private val _currentMadhab = MutableStateFlow(Madhab.SHAFI)
     val currentMadhab: StateFlow<Madhab> = _currentMadhab
 
+    // New Settings State
+    private val _is24HourFormat = MutableStateFlow(false)
+    val is24HourFormat: StateFlow<Boolean> = _is24HourFormat
+
+    private val _hijriDayOffset = MutableStateFlow(0)
+    val hijriDayOffset: StateFlow<Int> = _hijriDayOffset
+
+    private val _prePrayerReminderMinutes = MutableStateFlow(10)
+    val prePrayerReminderMinutes: StateFlow<Int> = _prePrayerReminderMinutes
+
+    private val _highLatitudeRule = MutableStateFlow(AppHighLatitudeRule.MIDDLE_OF_THE_NIGHT)
+    val highLatitudeRule: StateFlow<AppHighLatitudeRule> = _highLatitudeRule
+
+    // Track whether any locations have been saved
+    private val _hasLocations = MutableStateFlow(false)
+    val hasLocations: StateFlow<Boolean> = _hasLocations
+
+    /** Wrapper enum matching the active Adhan method. */
+    private val currentPrayerMethod: PrayerCalculationMethod
+        get() = when (_currentMethod.value) {
+            CalculationMethod.UMM_AL_QURA -> PrayerCalculationMethod.UMM_AL_QURA
+            CalculationMethod.MUSLIM_WORLD_LEAGUE -> PrayerCalculationMethod.MUSLIM_WORLD_LEAGUE
+            CalculationMethod.EGYPTIAN -> PrayerCalculationMethod.EGYPTIAN
+            CalculationMethod.KARACHI -> PrayerCalculationMethod.KARACHI
+            CalculationMethod.NORTH_AMERICA -> PrayerCalculationMethod.NORTH_AMERICA
+            CalculationMethod.MOONSIGHTING_COMMITTEE -> PrayerCalculationMethod.MOONSIGHTING_COMMITTEE
+            CalculationMethod.KUWAIT -> PrayerCalculationMethod.KUWAIT
+            CalculationMethod.QATAR -> PrayerCalculationMethod.QATAR
+            CalculationMethod.SINGAPORE -> PrayerCalculationMethod.SINGAPORE
+            CalculationMethod.TURKEY -> PrayerCalculationMethod.TURKEY
+            else -> PrayerCalculationMethod.MOONSIGHTING_COMMITTEE
+        }
+
+    private val currentPrayerMadhab: PrayerMadhab
+        get() = when (_currentMadhab.value) {
+            Madhab.HANAFI -> PrayerMadhab.HANAFI
+            else -> PrayerMadhab.STANDARD
+        }
+
     // Calculated prayer times for current location & date
     private val _prayerTimes = MutableStateFlow<List<PrayerTimeItem>>(emptyList())
     val prayerTimes: StateFlow<List<PrayerTimeItem>> = _prayerTimes
+
+    // Network status
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+    private val _lastUpdated = MutableStateFlow<Long?>(null)
+    val lastUpdated: StateFlow<Long?> = _lastUpdated
+
+    private val _sourceLabel = MutableStateFlow("Offline")
+    val sourceLabel: StateFlow<String> = _sourceLabel
+
+    private val _hijriDate = MutableStateFlow<String?>(null)
+    val hijriDate: StateFlow<String?> = _hijriDate
 
     // Upcoming prayer tracking
     private val _upcomingPrayerName = MutableStateFlow("DHUHR")
@@ -113,22 +166,33 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
         initEvents()
         initNotificationStates()
 
-        // Pre-populate location preferences saved states
+        // Restore saved settings & preferences
         val sharedPrefs = application.getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
-        val savedLocName = sharedPrefs.getString("saved_location", "City of London") ?: "City of London"
+        _is24HourFormat.value = sharedPrefs.getBoolean("is_24_hour_format", false)
+        _hijriDayOffset.value = sharedPrefs.getInt("hijri_day_offset", 0)
+        _prePrayerReminderMinutes.value = sharedPrefs.getInt("pre_prayer_reminder_mins", 10)
         
-        val savedConfig = _locationsList.value.find { it.name == savedLocName }
-        if (savedConfig != null) {
-            selectLocationAndSync(savedConfig)
-        } else {
-            // Fallback to first available or London if empty
-            val fallback = _locationsList.value.firstOrNull()
-            if (fallback != null) {
-                selectLocationAndSync(fallback)
-            } else {
-                setToLondon()
+        val savedMadhabStr = sharedPrefs.getString("current_madhab", null)
+        if (savedMadhabStr != null) {
+            try { _currentMadhab.value = Madhab.valueOf(savedMadhabStr) } catch (_: Exception) {}
+        }
+        val savedRuleStr = sharedPrefs.getString("high_latitude_rule", null)
+        if (savedRuleStr != null) {
+            try { _highLatitudeRule.value = AppHighLatitudeRule.valueOf(savedRuleStr) } catch (_: Exception) {}
+        }
+
+        // Restore saved location if available
+        if (_hasLocations.value) {
+            val savedLocName = sharedPrefs.getString("saved_location", null)
+            val savedConfig = savedLocName?.let { name ->
+                _locationsList.value.find { it.name == name }
+            } ?: _locationsList.value.firstOrNull()
+
+            if (savedConfig != null) {
+                selectLocationAndSync(savedConfig)
             }
         }
+        // If no locations, _hasLocations is false — GPS or dialog will handle it
 
         // Start real-time countdown updates
         startTicker()
@@ -149,33 +213,21 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
     private fun initLocations() {
         val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
         val savedLocationsJson = sharedPrefs.getString("locations_list_json", null)
-        
+
         if (savedLocationsJson != null) {
             try {
                 _locationsList.value = locationListAdapter.fromJson(savedLocationsJson) ?: emptyList()
             } catch (e: Exception) {
-                loadDefaultLocations()
+                _locationsList.value = emptyList()
             }
-        } else {
-            loadDefaultLocations()
         }
-    }
-
-    private fun loadDefaultLocations() {
-        _locationsList.value = listOf(
-            LocationConfig("london", "City of London", 51.5074, -0.1278, CalculationMethod.MOONSIGHTING_COMMITTEE, Madhab.SHAFI),
-            LocationConfig("makkah", "Makkah", 21.4225, 39.8262, CalculationMethod.UMM_AL_QURA, Madhab.SHAFI),
-            LocationConfig("medina", "Medina", 24.4672, 39.6111, CalculationMethod.UMM_AL_QURA, Madhab.SHAFI),
-            LocationConfig("cairo", "Cairo", 30.0444, 31.2357, CalculationMethod.EGYPTIAN, Madhab.SHAFI),
-            LocationConfig("newyork", "New York", 40.7128, -74.0060, CalculationMethod.NORTH_AMERICA, Madhab.SHAFI)
-        )
-        saveLocations()
+        _hasLocations.value = _locationsList.value.isNotEmpty()
     }
 
     private fun saveLocations() {
         val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
         val json = locationListAdapter.toJson(_locationsList.value)
-        sharedPrefs.edit().putString("locations_list_json", json).apply()
+        sharedPrefs.edit { putString("locations_list_json", json) }
     }
 
     fun addLocation(name: String, lat: Double, lon: Double, method: CalculationMethod, madhab: Madhab) {
@@ -187,56 +239,71 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
             method = method,
             madhab = madhab
         )
-        _locationsList.value = _locationsList.value + newConfig
+        _locationsList.value += newConfig
+        _hasLocations.value = true
         saveLocations()
     }
 
     fun deleteLocation(id: String) {
-        // Prevent deleting currently selected location if possible, or handle it
         _locationsList.value = _locationsList.value.filter { it.id != id }
+        _hasLocations.value = _locationsList.value.isNotEmpty()
         saveLocations()
     }
 
+    @Suppress("MissingPermission")
     fun addLocationFromGps(onComplete: (Boolean) -> Unit) {
         viewModelScope.launch {
-            if (!LocationHelper.isLocationEnabled(getApplication())) {
+            if (!LocationHelper.hasLocationPermission(getApplication()) || !LocationHelper.isLocationEnabled(getApplication())) {
                 _isLocationEnabled.value = false
                 onComplete(false)
                 return@launch
             }
             _isLocationEnabled.value = true
             try {
-                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication<Application>())
+                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication())
                 val location = fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
-                
+
                 if (location != null) {
                     val geocoder = Geocoder(getApplication(), Locale.getDefault())
                     val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
                     val cityName = addresses?.firstOrNull()?.locality ?: "Current Location"
-                    
+
                     _currentLocationName.value = cityName
                     _currentLatitude.value = location.latitude
                     _currentLongitude.value = location.longitude
                     recalculate()
+
+                    // Persist this location so it survives app restarts
+                    val existingMatch = _locationsList.value.find {
+                        it.latitude == location.latitude && it.longitude == location.longitude
+                    }
+                    if (existingMatch == null) {
+                        addLocation(cityName, location.latitude, location.longitude, _currentMethod.value, _currentMadhab.value)
+                    }
+
                     onComplete(true)
                 } else {
                     onComplete(false)
                 }
+            } catch (e: SecurityException) {
+                _isLocationEnabled.value = false
+                onComplete(false)
             } catch (e: Exception) {
                 onComplete(false)
             }
         }
     }
 
+    @Suppress("MissingPermission")
     fun fetchAndSetGpsLocation() {
         viewModelScope.launch {
-            if (!LocationHelper.isLocationEnabled(getApplication())) {
+            if (!LocationHelper.hasLocationPermission(getApplication()) || !LocationHelper.isLocationEnabled(getApplication())) {
                 _isLocationEnabled.value = false
                 return@launch
             }
             _isLocationEnabled.value = true
             try {
-                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication<Application>())
+                val fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication())
                 val location = fusedLocationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null).await()
 
                 if (location != null) {
@@ -251,6 +318,8 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
                 } else {
                     _isLocationEnabled.value = false
                 }
+            } catch (_: SecurityException) {
+                _isLocationEnabled.value = false
             } catch (_: Exception) {
                 // GPS unavailable or permission not granted — keep saved location
             }
@@ -288,46 +357,42 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
         recalculate()
 
         val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
-        sharedPrefs.edit().putString("saved_location", config.name).apply()
+        sharedPrefs.edit { putString("saved_location", config.name) }
 
         Toast.makeText(getApplication(), getApplication<Application>().getString(R.string.switched_to_location, config.name), Toast.LENGTH_SHORT).show()
     }
 
-    fun setToLondon() {
-        _currentLocationName.value = "City of London"
-        _currentLatitude.value = 51.5074
-        _currentLongitude.value = -0.1278
-        _currentMethod.value = CalculationMethod.MOONSIGHTING_COMMITTEE
-        _currentMadhab.value = Madhab.SHAFI
-        recalculate()
-    }
-
-    fun setToMakkah() {
-        _currentLocationName.value = "Makkah"
-        _currentLatitude.value = 21.4225
-        _currentLongitude.value = 39.8262
-        _currentMethod.value = CalculationMethod.UMM_AL_QURA
-        _currentMadhab.value = Madhab.SHAFI
-        recalculate()
-    }
-
-    fun setToMedina() {
-        _currentLocationName.value = "Medina"
-        _currentLatitude.value = 24.4672
-        _currentLongitude.value = 39.6111
-        _currentMethod.value = CalculationMethod.UMM_AL_QURA
-        _currentMadhab.value = Madhab.SHAFI
-        recalculate()
-    }
-
     fun recalculate() {
-        _prayerTimes.value = PrayerTimesCalculator.calculateTimes(
-            latitude = _currentLatitude.value,
-            longitude = _currentLongitude.value,
-            method = _currentMethod.value,
-            madhab = _currentMadhab.value
-        )
-        updateCountdown()
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = PrayerTimesRepository.get(getApplication()).getTimes(
+                latitude = _currentLatitude.value,
+                longitude = _currentLongitude.value,
+                method = currentPrayerMethod,
+                madhab = currentPrayerMadhab,
+                is24HourFormat = _is24HourFormat.value,
+                highLatitudeRule = _highLatitudeRule.value
+            )
+            when (result) {
+                is PrayerTimesRepository.FetchResult.Success -> {
+                    _prayerTimes.value = result.items
+                    _lastUpdated.value = System.currentTimeMillis()
+                    _sourceLabel.value = when (result.source) {
+                        PrayerTimesRepository.Source.NETWORK -> "Aladhan API"
+                        PrayerTimesRepository.Source.CACHE -> "Cached"
+                        PrayerTimesRepository.Source.OFFLINE -> "Offline"
+                    }
+                    if (result.hijriDate != null) _hijriDate.value = result.hijriDate
+                }
+                is PrayerTimesRepository.FetchResult.Failure -> {
+                    _prayerTimes.value = result.items
+                    _sourceLabel.value = "Offline"
+                    Toast.makeText(getApplication(), result.error, Toast.LENGTH_SHORT).show()
+                }
+            }
+            _isLoading.value = false
+            updateCountdown()
+        }
     }
 
     fun togglePrayerNotification(prayerName: String) {
@@ -392,6 +457,34 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
         )
     }
 
+    /** Force a fresh fetch from the network, bypassing the local cache. */
+    fun forceRefresh() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = PrayerTimesRepository.get(getApplication()).getTimes(
+                latitude = _currentLatitude.value,
+                longitude = _currentLongitude.value,
+                method = currentPrayerMethod,
+                madhab = currentPrayerMadhab,
+                is24HourFormat = _is24HourFormat.value,
+                highLatitudeRule = _highLatitudeRule.value
+            )
+            when (result) {
+                is PrayerTimesRepository.FetchResult.Success -> {
+                    _prayerTimes.value = result.items
+                    _lastUpdated.value = System.currentTimeMillis()
+                    _sourceLabel.value = "Aladhan API"
+                    if (result.hijriDate != null) _hijriDate.value = result.hijriDate
+                }
+                is PrayerTimesRepository.FetchResult.Failure -> {
+                    Toast.makeText(getApplication(), result.error, Toast.LENGTH_SHORT).show()
+                }
+            }
+            _isLoading.value = false
+            updateCountdown()
+        }
+    }
+
     private fun startTicker() {
         tickerJob?.cancel()
         tickerJob = viewModelScope.launch {
@@ -449,13 +542,50 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    // --- Settings Mutators ---
+
+    fun toggle24HourFormat(enabled: Boolean) {
+        _is24HourFormat.value = enabled
+        val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
+        sharedPrefs.edit { putBoolean("is_24_hour_format", enabled) }
+        recalculate()
+    }
+
+    fun setMadhab(madhab: Madhab) {
+        _currentMadhab.value = madhab
+        val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
+        sharedPrefs.edit { putString("current_madhab", madhab.name) }
+        recalculate()
+    }
+
+    fun setHijriDayOffset(offset: Int) {
+        _hijriDayOffset.value = offset
+        val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
+        sharedPrefs.edit { putInt("hijri_day_offset", offset) }
+        recalculate()
+    }
+
+    fun setPrePrayerReminderMinutes(minutes: Int) {
+        _prePrayerReminderMinutes.value = minutes
+        val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
+        sharedPrefs.edit { putInt("pre_prayer_reminder_mins", minutes) }
+    }
+
+    fun setHighLatitudeRule(rule: AppHighLatitudeRule) {
+        _highLatitudeRule.value = rule
+        val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
+        sharedPrefs.edit { putString("high_latitude_rule", rule.name) }
+        recalculate()
+    }
+
     /**
      * Converts a LocalDate to formatted Hijri string (Native Chronology)
      */
     @RequiresApi(Build.VERSION_CODES.O)
     fun formatHijriDate(localDate: LocalDate): String {
         return try {
-            val hijrahDate = HijrahDate.from(localDate)
+            val adjustedDate = localDate.plusDays(_hijriDayOffset.value.toLong())
+            val hijrahDate = HijrahDate.from(adjustedDate)
             val monthNames = arrayOf(
                 "Muharram", "Safar", "Rabi' al-Awwal", "Rabi' al-Thani",
                 "Jumada al-Awwal", "Jumada al-Thani", "Rajab", "Sha'ban",
@@ -476,10 +606,11 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
     @RequiresApi(Build.VERSION_CODES.O)
     fun getHijriDay(localDate: LocalDate): Int {
         return try {
-            val hijrahDate = HijrahDate.from(localDate)
+            val adjustedDate = localDate.plusDays(_hijriDayOffset.value.toLong())
+            val hijrahDate = HijrahDate.from(adjustedDate)
             hijrahDate.get(ChronoField.DAY_OF_MONTH)
         } catch (e: Exception) {
-            (localDate.dayOfMonth + 12) % 30 + 1 // pseudo fallback
+            ((localDate.dayOfMonth + 12 + _hijriDayOffset.value) % 30).let { if (it <= 0) it + 30 else it }
         }
     }
 

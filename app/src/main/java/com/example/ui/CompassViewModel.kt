@@ -1,4 +1,4 @@
-package com.example.ui
+package com.prayertimesApp.ui
 
 import android.app.Application
 import android.hardware.GeomagneticField
@@ -8,7 +8,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
-import com.example.data.QiblaMathUtils
+import com.prayertimesApp.data.QiblaMathUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlin.math.sqrt
