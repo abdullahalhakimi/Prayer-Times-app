@@ -31,3 +31,33 @@
 -dontwarn org.openjsse.javax.net.ssl.SSLSocket
 -dontwarn org.openjsse.net.ssl.OpenJSSE
 
+# Preserve line numbers and signatures for crash reports
+-keepattributes Signature, InnerClasses, EnclosingMethod, *Annotation*
+-keepattributes SourceFile, LineNumberTable
+
+# Preserve enum constant names and fields for Moshi / reflection
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+    <fields>;
+}
+
+# Moshi rules: Keep generated JsonAdapters and Moshi data models
+-keep class * extends com.squareup.moshi.JsonAdapter
+-keep @com.squareup.moshi.JsonClass class * { *; }
+-keepclassmembers @com.squareup.moshi.JsonClass class * {
+    <init>(...);
+}
+-keepclassmembers class * {
+    @com.squareup.moshi.Json *;
+}
+
+# Keep Adhan library models and enums (CalculationMethod, Madhab, etc.)
+-keep class com.batoulapps.adhan.** { *; }
+-keepclassmembers class com.batoulapps.adhan.** { *; }
+
+# Keep App data models & DTOs
+-keep class com.prayertimesApp.data.** { *; }
+-keepclassmembers class com.prayertimesApp.data.** { *; }
+
+
