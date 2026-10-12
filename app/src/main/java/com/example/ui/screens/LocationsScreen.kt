@@ -8,10 +8,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.GpsFixed
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -27,10 +25,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.batoulapps.adhan.CalculationMethod
 import com.batoulapps.adhan.Madhab
 import com.prayertimesApp.R
 import com.prayertimesApp.data.LocationConfig
+import com.prayertimesApp.data.PrayerTimeItem
 import com.prayertimesApp.ui.PrayerTimesViewModel
 import com.prayertimesApp.ui.theme.ActivePrayerBg
 import com.prayertimesApp.ui.theme.AmberAccent
@@ -62,10 +60,10 @@ fun LocationsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Managed Locations", fontWeight = FontWeight.Bold, color = Color.White) },
+                title = { Text(stringResource(R.string.managed_locations_title), fontWeight = FontWeight.Bold, color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back), tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = DeepTeal)
@@ -77,7 +75,7 @@ fun LocationsScreen(
                 containerColor = DeepTeal,
                 contentColor = Color.White
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add City")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_city_title))
             }
         },
         containerColor = WarmCreame,
@@ -121,45 +119,6 @@ fun LocationsScreen(
                     }
                 }
             } else {
-                // Header note card
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = DeepTeal.copy(alpha = 0.06f)),
-                    shape = RoundedCornerShape(16.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, DeepTeal.copy(alpha = 0.12f)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Info,
-                            contentDescription = "Setting notes description",
-                            tint = DeepTeal,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "Selecting any city updates calculation variables globally, using region-authorized methods.",
-                            fontSize = 12.sp,
-                            color = Color(0xFF444444),
-                            lineHeight = 16.sp
-                        )
-                    }
-                }
-
-                Text(
-                    text = "SAVED PLACES & TIME COMPARISONS",
-                    fontSize = 12.sp,
-                    color = Color.Gray,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp,
-                    modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
-                )
-
                 // Scrollable list of locations
                 LazyColumn(
                     modifier = Modifier
@@ -199,7 +158,7 @@ fun LocationsScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = "Add New Location",
+                    text = stringResource(R.string.add_city_title),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = DeepTeal
@@ -220,8 +179,8 @@ fun LocationsScreen(
                         Icon(Icons.Default.Search, contentDescription = null, tint = DeepTeal)
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
-                            Text("Manually", fontWeight = FontWeight.Bold)
-                            Text("Search by country and city", fontSize = 12.sp, color = Color.Gray)
+                            Text(stringResource(R.string.manual_add_city), fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.search_city), fontSize = 12.sp, color = Color.Gray)
                         }
                     }
                 }
@@ -249,8 +208,7 @@ fun LocationsScreen(
                         Icon(Icons.Default.GpsFixed, contentDescription = null, tint = DeepTeal)
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
-                            Text("Using GPS", fontWeight = FontWeight.Bold)
-                            Text("Auto-detect your current city", fontSize = 12.sp, color = Color.Gray)
+                            Text(stringResource(R.string.use_gps_location), fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -274,66 +232,10 @@ fun LocationsScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CalculationMethodDropdown(
-    selectedMethod: CalculationMethod,
-    onMethodSelected: (CalculationMethod) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val methods = CalculationMethod.entries
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
-    ) {
-        OutlinedTextField(
-            value = getFriendlyMethodName(selectedMethod),
-            onValueChange = {},
-            readOnly = true,
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = DeepTeal,
-                unfocusedBorderColor = Color.LightGray
-            )
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            methods.forEach { method ->
-                DropdownMenuItem(
-                    text = { Text(getFriendlyMethodName(method)) },
-                    onClick = {
-                        onMethodSelected(method)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}
-
-fun getFriendlyMethodName(method: CalculationMethod): String {
-    return when (method) {
-        CalculationMethod.UMM_AL_QURA -> "Umm Al-Qura"
-        CalculationMethod.MOONSIGHTING_COMMITTEE -> "Moonsighting Committee"
-        CalculationMethod.EGYPTIAN -> "Egyptian General"
-        CalculationMethod.NORTH_AMERICA -> "ISNA (North America)"
-        CalculationMethod.MUSLIM_WORLD_LEAGUE -> "Muslim World League"
-        CalculationMethod.KARACHI -> "Karachi"
-        CalculationMethod.KUWAIT -> "Kuwait"
-        CalculationMethod.QATAR -> "Qatar"
-        CalculationMethod.SINGAPORE -> "Singapore"
-        CalculationMethod.TURKEY -> "Turkey"
-    }
-}
-
 @Composable
 fun LocationCardRow(
     config: LocationConfig,
-    times: List<com.prayertimesApp.data.PrayerTimeItem>,
+    times: List<PrayerTimeItem>,
     isSelected: Boolean,
     onSelect: () -> Unit,
     onDelete: () -> Unit
@@ -342,110 +244,88 @@ fun LocationCardRow(
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) ActivePrayerBg else Color.White
         ),
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(16.dp),
         border = androidx.compose.foundation.BorderStroke(
             width = 1.dp,
             color = if (isSelected) DeepTeal.copy(alpha = 0.2f) else BorderColor
         ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isSelected) 0.dp else 1.dp
-        ),
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onSelect() }
-            .testTag("location_card_${config.id}")
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp)
-        ) {
-            // Header Row (City and Selection indicator)
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.LocationOn,
-                        contentDescription = "Place indicator icon",
-                        tint = if (isSelected) AmberAccent else Color.Gray,
-                        modifier = Modifier.size(20.dp)
+                        contentDescription = null,
+                        tint = if (isSelected) AmberAccent else DeepTeal
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = config.name,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isSelected) DeepTeal else Color(0xFF333333)
+                        color = DeepTeal
                     )
                 }
 
-                if (isSelected) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Selected location checked indicator",
-                        tint = AmberAccent,
-                        modifier = Modifier.size(22.dp)
-                    )
-                } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (isSelected) {
+                        Surface(
+                            color = DeepTeal,
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.current_label),
+                                color = Color.White,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+
                     IconButton(onClick = onDelete) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete location",
-                            tint = Color.Gray,
-                            modifier = Modifier.size(20.dp)
+                            contentDescription = stringResource(R.string.delete),
+                            tint = Color.Gray
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            if (times.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.4f))
+                Spacer(modifier = Modifier.height(12.dp))
 
-            // Subtitle: Method Used
-            Text(
-                text = "Method: ${getFriendlyMethodName(config.method)}",
-                color = Color.Gray,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium
-            )
-
-            HorizontalDivider(
-                color = Color.LightGray.copy(alpha = 0.3f),
-                thickness = 1.dp,
-                modifier = Modifier.padding(vertical = 12.dp)
-            )
-
-            // Grid content for calculated times
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                val relevantNames = listOf("Fajr", "Dhuhr", "Asr", "Maghrib", "Isha")
-                
-                relevantNames.forEach { pName ->
-                    val pTime = times.find { it.name.equals(pName, ignoreCase = true) }?.formattedTime ?: "--:--"
-                    
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = pName,
-                            fontSize = 11.sp,
-                            color = Color.Gray,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = pTime.replace(" ", "\n").lowercase(),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (isSelected) DeepTeal else Color(0xFF555555),
-                            maxLines = 2,
-                            lineHeight = 13.sp
-                        )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    times.take(6).forEach { prayer ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = stringResource(prayer.nameResId),
+                                fontSize = 10.sp,
+                                color = Color.Gray,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = prayer.formattedTime.substringBefore(" "),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = DeepTeal
+                            )
+                        }
                     }
                 }
             }

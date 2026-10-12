@@ -31,10 +31,10 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlin.time.Duration.Companion.milliseconds
 import androidx.core.content.edit
 
-enum class NotificationType(val label: String) {
-    SILENT("Silent"),
-    BEEP("Beep"),
-    ADHAN("Adhan")
+enum class NotificationType(val label: String, @androidx.annotation.StringRes val nameResId: Int) {
+    SILENT("Silent", R.string.notification_silent),
+    BEEP("Beep", R.string.notification_beep),
+    ADHAN("Adhan", R.string.notification_adhan)
 }
 
 data class EventReminder(
@@ -79,6 +79,9 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
 
     private val _highLatitudeRule = MutableStateFlow(AppHighLatitudeRule.MIDDLE_OF_THE_NIGHT)
     val highLatitudeRule: StateFlow<AppHighLatitudeRule> = _highLatitudeRule
+
+    private val _appLanguage = MutableStateFlow("system")
+    val appLanguage: StateFlow<String> = _appLanguage
 
     // Track whether any locations have been saved
     private val _hasLocations = MutableStateFlow(false)
@@ -172,6 +175,12 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
         _hijriDayOffset.value = sharedPrefs.getInt("hijri_day_offset", 0)
         _prePrayerReminderMinutes.value = sharedPrefs.getInt("pre_prayer_reminder_mins", 10)
         
+        val savedLang = sharedPrefs.getString("app_language", "system") ?: "system"
+        _appLanguage.value = savedLang
+        if (savedLang != "system") {
+            applyAppLanguage(savedLang)
+        }
+
         val savedMadhabStr = sharedPrefs.getString("current_madhab", null)
         if (savedMadhabStr != null) {
             try { _currentMadhab.value = Madhab.valueOf(savedMadhabStr) } catch (_: Exception) {}
@@ -578,6 +587,39 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
         recalculate()
     }
 
+    fun setAppLanguage(languageCode: String) {
+        _appLanguage.value = languageCode
+        val sharedPrefs = getApplication<Application>().getSharedPreferences("prayer_times_prefs", Context.MODE_PRIVATE)
+        sharedPrefs.edit { putString("app_language", languageCode) }
+        applyAppLanguage(languageCode)
+    }
+
+    private fun applyAppLanguage(languageCode: String) {
+        val app = getApplication<Application>()
+        val locale = when (languageCode) {
+            "ar" -> Locale.forLanguageTag("ar")
+            "en" -> Locale.forLanguageTag("en")
+            else -> Locale.getDefault()
+        }
+        Locale.setDefault(locale)
+        val config = app.resources.configuration
+        config.setLocale(locale)
+        @Suppress("DEPRECATION")
+        app.resources.updateConfiguration(config, app.resources.displayMetrics)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            try {
+                val localeManager = app.getSystemService(android.app.LocaleManager::class.java)
+                val localeList = if (languageCode == "system") {
+                    android.os.LocaleList.getEmptyLocaleList()
+                } else {
+                    android.os.LocaleList.forLanguageTags(languageCode)
+                }
+                localeManager?.applicationLocales = localeList
+            } catch (_: Exception) {}
+        }
+    }
+
     /**
      * Converts a LocalDate to formatted Hijri string (Native Chronology)
      */
@@ -586,17 +628,27 @@ class PrayerTimesViewModel(application: Application) : AndroidViewModel(applicat
         return try {
             val adjustedDate = localDate.plusDays(_hijriDayOffset.value.toLong())
             val hijrahDate = HijrahDate.from(adjustedDate)
-            val monthNames = arrayOf(
-                "Muharram", "Safar", "Rabi' al-Awwal", "Rabi' al-Thani",
-                "Jumada al-Awwal", "Jumada al-Thani", "Rajab", "Sha'ban",
-                "Ramadan", "Shawwal", "Dhu al-Qa'dah", "Dhu al-Hijjah"
-            )
+            val isArabic = Locale.getDefault().language == "ar" || _appLanguage.value == "ar"
+            val monthNames = if (isArabic) {
+                arrayOf(
+                    "محرم", "صفر", "ربيع الأول", "ربيع الثاني",
+                    "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان",
+                    "رمضان", "شوال", "ذو القعدة", "ذو الحجة"
+                )
+            } else {
+                arrayOf(
+                    "Muharram", "Safar", "Rabi' al-Awwal", "Rabi' al-Thani",
+                    "Jumada al-Awwal", "Jumada al-Thani", "Rajab", "Sha'ban",
+                    "Ramadan", "Shawwal", "Dhu al-Qa'dah", "Dhu al-Hijjah"
+                )
+            }
             val monthIndex = (hijrahDate.get(ChronoField.MONTH_OF_YEAR) - 1).coerceIn(0, 11)
             val day = hijrahDate.get(ChronoField.DAY_OF_MONTH)
             val year = hijrahDate.get(ChronoField.YEAR)
-            "$day ${monthNames[monthIndex]} $year AH"
+            val suffix = if (isArabic) "هـ" else "AH"
+            "$day ${monthNames[monthIndex]} $year $suffix"
         } catch (e: Exception) {
-            "15 Sha'ban 1447 AH" // Safe fallback in case of standard timezone constraints in emulation
+            if (Locale.getDefault().language == "ar" || _appLanguage.value == "ar") "15 شعبان 1447 هـ" else "15 Sha'ban 1447 AH"
         }
     }
 

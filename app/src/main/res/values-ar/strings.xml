@@ -1,0 +1,141 @@
+<resources>
+    <string name="app_name">مواقيت الصلاة</string>
+    <string name="location_description">الموقع</string>
+    <string name="upcoming_prayer_label">الصلاة القادمة</string>
+    <string name="starts_at">تبدأ في %1$s</string>
+    <string name="visual_indicator_description">مؤشر بصري</string>
+    <string name="countdown_timer_description">عداد تنازلي</string>
+    <string name="time_remaining_label">الوقت المتبقي:</string>
+    <string name="current_label">الحالية</string>
+    <string name="toggle_bell_description">تبديل نوع التنبيه</string>
+    <string name="settings_title">الإعدادات</string>
+    <string name="setting_notes_description">ملاحظات الإعدادات</string>
+    <string name="settings_header_note">خصص تجربة مواقيت الصلاة وادر طرق الحساب الخاصة بكل مدينة.</string>
+    <string name="general_settings_header">إعدادات عامة</string>
+    <string name="managed_locations_title">المواقع المدارة</string>
+    <string name="managed_locations_subtitle">إضافة أو حذف أو التبديل بين المدن</string>
+    <string name="screen_prayers">الصلوات</string>
+    <string name="screen_qibla">القبلة</string>
+    <string name="screen_hijri">الهجري</string>
+    <string name="screen_agenda">التنبيهات</string>
+    <string name="screen_settings">الإعدادات</string>
+    <string name="screen_locations">المواقع</string>
+    <string name="countdown_format">متبقي %1$d ساعة و %2$d دقيقة</string>
+    <string name="switched_to_location">تم الانتقال إلى %1$s</string>
+    <string name="no_location_title">لم يتم تحديد موقع</string>
+    <string name="no_location_subtitle">أضف مدينتك الأولى لعرض مواقيت الصلاة</string>
+    <string name="no_locations_saved">لا توجد مواقع محفوظة بعد.</string>
+    <string name="no_locations_hint">انقر على زر + لإضافة مدينتك الأولى.</string>
+
+    <!-- Language Settings -->
+    <string name="language_settings_title">لغة التطبيق</string>
+    <string name="language_settings_subtitle">اختر العربية أو الإنجليزية أو الافتراضي للنظام</string>
+    <string name="lang_system_default">الافتراضي للنظام</string>
+    <string name="lang_english">English</string>
+    <string name="lang_arabic">العربية</string>
+
+    <!-- Settings Screen String Resources -->
+    <string name="fiqh_settings_header">الحساب والفقه</string>
+    <string name="madhab_title">حساب العصر (المذهب)</string>
+    <string name="madhab_subtitle">اختر المذهب الفقهي لحساب صلاة العصر</string>
+    <string name="hijri_offset_title">تعديل التاريخ الهجري</string>
+    <string name="hijri_offset_subtitle">تعديل يدوي (± أيام) حسب رؤية الهلال المحلية</string>
+    <string name="high_latitude_title">قاعدة خطوط العرض العليا</string>
+    <string name="high_latitude_subtitle">تعديل الحساب للمناطق ذات خطوط العرض العالية</string>
+
+    <string name="display_settings_header">العرض وصيغة الوقت</string>
+    <string name="time_format_title">صيغة 24 ساعة</string>
+    <string name="time_format_subtitle">التبديل بين نظام 12 ساعة (ص/م) ونظام 24 ساعة</string>
+
+    <string name="notification_settings_header">الإشعارات والتذكيرات</string>
+    <string name="pre_prayer_warning_title">التنبيه قبل الأذان</string>
+    <string name="pre_prayer_warning_subtitle">تنبيه تذكيري قبل وقت الصلاة</string>
+
+    <string name="about_settings_header">عن التطبيق والشروط</string>
+    <string name="about_app_title">عن تطبيق مواقيت الصلاة</string>
+    <string name="about_app_subtitle">الإصدار 1.0.0 • محرك أذان Batoul Apps ومكتبة Aladhan</string>
+    <string name="privacy_policy_title">سياسة الخصوصية</string>
+    <string name="privacy_policy_subtitle">اقرأ كيف نحمي موقعك وبياناتك الحساسة</string>
+
+    <!-- Prayer Names -->
+    <string name="prayer_fajr">الفجر</string>
+    <string name="prayer_sunrise">الشروق</string>
+    <string name="prayer_dhuhr">الظهر</string>
+    <string name="prayer_asr">العصر</string>
+    <string name="prayer_maghrib">المغرب</string>
+    <string name="prayer_isha">العشاء</string>
+    <string name="prayer_qiyam">القيام</string>
+
+    <!-- Calculation Methods -->
+    <string name="calc_method_umm_al_qura">جامعة أم القرى (مكة المكرمة)</string>
+    <string name="calc_method_mwl">رابطة العالم الإسلامي</string>
+    <string name="calc_method_egyptian">الهيئة المصرية العامة للمساحة</string>
+    <string name="calc_method_karachi">جامعة العلوم الإسلامية بكراتشي</string>
+    <string name="calc_method_isna">الجمعية الإسلامية لشمال أمريكا (ISNA)</string>
+    <string name="calc_method_moonsighting">لجنة رؤية الهلال</string>
+    <string name="calc_method_kuwait">الكويت</string>
+    <string name="calc_method_qatar">قطر</string>
+    <string name="calc_method_singapore">سنغافورة</string>
+    <string name="calc_method_turkey">ديانة تركيا</string>
+
+    <!-- Madhabs -->
+    <string name="madhab_standard">الشافعي، المالكي، الحنبلي (الجمهور)</string>
+    <string name="madhab_hanafi">الحنفي</string>
+
+    <!-- High Latitude Rules -->
+    <string name="high_lat_middle_night">منتصف الليل</string>
+    <string name="high_lat_seventh_night">سبع الليل</string>
+    <string name="high_lat_twilight_angle">زاوية الشفق</string>
+
+    <!-- Hijri Chronology Screen -->
+    <string name="hijri_title">التقويم الهجري</string>
+    <string name="todays_hijri_date">تاريخ اليوم الهجري</string>
+    <string name="upcoming_events">المناسبات الإسلامية القادمة</string>
+    <string name="calendar_tab">التقويم</string>
+    <string name="events_tab">المناسبات</string>
+    <string name="days_offset">تعديل الأيام</string>
+    <string name="offset_note">قم بالتعديل إذا اختلفت رؤية الهلال المحلية</string>
+
+    <!-- Qibla Compass Screen -->
+    <string name="qibla_aligned">باتجاه القبلة تماماً</string>
+    <string name="qibla_facing_makkah">مواجه لمكة المكرمة</string>
+    <string name="qibla_turn">أدر %1$s° للتطابق</string>
+    <string name="qibla_calibration_hint">حرك الجهاز على شكل 8 للمعايرة</string>
+    <string name="magnetic_interference">تداخل مغناطيسي</string>
+    <string name="location_required">الموقع مطلوب</string>
+
+    <!-- Agenda & Alarms Screen -->
+    <string name="agenda_title">أجندة التنبيهات</string>
+    <string name="agenda_info_text">تُفعل التنبيهات عبر مدير التنبيهات للعمل في الخلفية حتى أثناء وضع السكون.</string>
+    <string name="active_alarms_header">التنبيهات والجدول الزمني</string>
+    <string name="suhoor_alarm">تنبيه السحور</string>
+    <string name="suhoor_alarm_sub">قبل 30 دقيقة من أذان الفجر</string>
+    <string name="pre_fajr_reminder">تذكير قبل الفجر</string>
+    <string name="pre_fajr_sub">قبل 15 دقيقة من أذان الفجر</string>
+    <string name="duha_prayer">صلاة الضحى</string>
+    <string name="duha_sub">بعد 20 دقيقة من الشروق</string>
+    <string name="night_qiyam">قيام الليل</string>
+    <string name="night_qiyam_sub">الثلث الأخير من الليل</string>
+
+    <!-- Locations & Manual Add Screen -->
+    <string name="active_city_label">المدينة الحالية: %1$s</string>
+    <string name="add_city_title">إضافة مدينة</string>
+    <string name="use_gps_location">استخدام موقع GPS</string>
+    <string name="manual_add_city">إضافة مدينة يدوياً</string>
+    <string name="select_country">اختر الدولة</string>
+    <string name="select_city">اختر المدينة</string>
+    <string name="location_summary">ملخص الموقع</string>
+    <string name="search_country">ابحث عن دولة</string>
+    <string name="search_city">ابحث عن مدينة</string>
+    <string name="calculation_method">طريقة الحساب</string>
+    <string name="confirm_add_location">إضافة الموقع</string>
+    <string name="cancel">إلغاء</string>
+    <string name="confirm">تأكيد</string>
+    <string name="back">رجوع</string>
+    <string name="delete">حذف</string>
+
+    <!-- Notifications -->
+    <string name="notification_silent">صامت</string>
+    <string name="notification_beep">نغمة</string>
+    <string name="notification_adhan">الأذان</string>
+</resources>

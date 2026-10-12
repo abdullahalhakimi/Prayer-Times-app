@@ -56,9 +56,11 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.prayertimesApp.R
 import com.prayertimesApp.ui.CompassViewModel
 import com.prayertimesApp.ui.theme.AmberAccent
 import com.prayertimesApp.ui.theme.BorderColor
@@ -129,14 +131,10 @@ fun QiblaScreen(
     }
 
     val guideText = if (isAligned) {
-        "Qibla Aligned! You are facing the Kaaba."
+        stringResource(R.string.qibla_aligned)
     } else {
         val degrees = Math.round(Math.abs(signedDiff))
-        if (signedDiff > 0) {
-            "Rotate $degrees° Right to align with Kaaba"
-        } else {
-            "Rotate $degrees° Left to align with Kaaba"
-        }
+        stringResource(R.string.qibla_turn, degrees.toString())
     }
 
     val guideColor = if (isAligned) Color(0xFF2E7D32) else Color(0xFF1E4646)
@@ -157,7 +155,7 @@ fun QiblaScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Qibla Finder", fontWeight = FontWeight.Bold, color = Color.White) },
+                title = { Text(stringResource(R.string.screen_qibla), fontWeight = FontWeight.Bold, color = Color.White) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = DeepTeal),
                 actions = {
                     Icon(
@@ -223,7 +221,7 @@ fun QiblaScreen(
                         modifier = Modifier.padding(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("Kaaba Angle", fontSize = 11.sp, color = Color.Gray, fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.qibla_facing_makkah), fontSize = 10.sp, color = Color.Gray, fontWeight = FontWeight.Medium)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "${qiblaBearing.toInt()}°",
@@ -246,7 +244,7 @@ fun QiblaScreen(
                         modifier = Modifier.padding(12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("Magnetic Field", fontSize = 11.sp, color = Color.Gray, fontWeight = FontWeight.Medium)
+                        Text(stringResource(R.string.magnetic_interference), fontSize = 10.sp, color = Color.Gray, fontWeight = FontWeight.Medium)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "${magneticStrength.toInt()} µT",
@@ -280,27 +278,10 @@ fun QiblaScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Device location is off",
+                                text = stringResource(R.string.location_required),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFFE65100)
-                            )
-                            Text(
-                                text = "Qibla direction may be inaccurate",
-                                fontSize = 11.sp,
-                                color = Color(0xFFBF360C)
-                            )
-                        }
-                        TextButton(
-                            onClick = {
-                                context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-                            }
-                        ) {
-                            Text(
-                                text = "Enable",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFFF57C00)
                             )
                         }
                     }
@@ -559,7 +540,7 @@ fun QiblaScreen(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Hold your device completely flat for maximum accuracy.",
+                            text = stringResource(R.string.qibla_calibration_hint),
                             fontSize = 11.sp,
                             color = if (isAligned) Color(0xFF558B2F) else Color(0xFF64748B)
                         )

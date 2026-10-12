@@ -11,11 +11,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.EventNote
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.*
@@ -25,10 +24,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.annotation.RequiresApi
+import android.os.Build
+import com.prayertimesApp.R
 import com.prayertimesApp.ui.EventReminder
 import com.prayertimesApp.ui.PrayerTimesViewModel
 import com.prayertimesApp.ui.theme.AmberAccent
@@ -39,6 +42,7 @@ import java.time.LocalDate
 import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HijriScreen(
     viewModel: PrayerTimesViewModel,
@@ -58,7 +62,7 @@ fun HijriScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Hijri Chronology", fontWeight = FontWeight.Bold, color = Color.White) },
+                title = { Text(stringResource(R.string.hijri_title), fontWeight = FontWeight.Bold, color = Color.White) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = DeepTeal)
             )
         },
@@ -90,7 +94,7 @@ fun HijriScreen(
                 ) {
                     Column {
                         Text(
-                            text = "TODAY'S HIJRI DATE",
+                            text = stringResource(R.string.todays_hijri_date),
                             color = Color.White.copy(alpha = 0.6f),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
@@ -149,7 +153,7 @@ fun HijriScreen(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Dual Calendar",
+                            text = stringResource(R.string.calendar_tab),
                             fontWeight = FontWeight.Bold,
                             color = if (activeTab == "calendar") DeepTeal else Color.Gray
                         )
@@ -173,7 +177,7 @@ fun HijriScreen(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Islamic Events",
+                            text = stringResource(R.string.events_tab),
                             fontWeight = FontWeight.Bold,
                             color = if (activeTab == "events") DeepTeal else Color.Gray
                         )
@@ -198,7 +202,7 @@ fun HijriScreen(
                         }
                         currentCalendar = prev
                     }) {
-                        Icon(Icons.Default.ChevronLeft, contentDescription = "Prev Month", tint = DeepTeal)
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Prev Month", tint = DeepTeal)
                     }
 
                     Text(
@@ -216,7 +220,7 @@ fun HijriScreen(
                         }
                         currentCalendar = next
                     }) {
-                        Icon(Icons.Default.ChevronRight, contentDescription = "Next Month", tint = DeepTeal)
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next Month", tint = DeepTeal)
                     }
                 }
 
@@ -309,16 +313,6 @@ fun HijriScreen(
                         }
                     }
                 }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                // Info footer
-                Text(
-                    text = "* Smaller numbers at bottom represent respective Hijri days.",
-                    fontSize = 11.sp,
-                    color = Color.Gray,
-                    textAlign = TextAlign.Start,
-                    modifier = Modifier.fillMaxWidth()
-                )
             } else {
                 // Islamic Events List view
                 val eventsList by viewModel.islamicEvents.collectAsState()

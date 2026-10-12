@@ -14,15 +14,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.batoulapps.adhan.CalculationMethod
+import com.prayertimesApp.R
 import com.prayertimesApp.data.City
 import com.prayertimesApp.data.Country
 import com.prayertimesApp.data.CityRepository
 import com.prayertimesApp.data.CountryCityProvider
+import com.prayertimesApp.data.PrayerCalculationMethod
 import com.prayertimesApp.ui.theme.DeepTeal
 import com.prayertimesApp.ui.theme.WarmCreame
 import kotlinx.coroutines.delay
@@ -50,9 +53,9 @@ fun ManualAddLocationScreen(
                 title = {
                     Text(
                         text = when (currentStep) {
-                            ManualStep.SELECT_COUNTRY -> "Select Country"
-                            ManualStep.SELECT_CITY -> "Select City"
-                            ManualStep.SUMMARY -> "Location Summary"
+                            ManualStep.SELECT_COUNTRY -> stringResource(R.string.select_country)
+                            ManualStep.SELECT_CITY -> stringResource(R.string.select_city)
+                            ManualStep.SUMMARY -> stringResource(R.string.location_summary)
                         },
                         color = Color.White
                     )
@@ -65,7 +68,7 @@ fun ManualAddLocationScreen(
                             ManualStep.SUMMARY -> currentStep = ManualStep.SELECT_CITY
                         }
                     }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back), tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = DeepTeal)
@@ -104,7 +107,7 @@ fun CountryList(onCountrySelected: (Country) -> Unit) {
     }
 
     Column {
-        SearchBar(query = searchQuery, onQueryChange = { searchQuery = it }, placeholder = "Search Country")
+        SearchBar(query = searchQuery, onQueryChange = { searchQuery = it }, placeholder = stringResource(R.string.search_country))
         LazyColumn {
             items(filteredCountries) { country ->
                 ListItem(
@@ -137,7 +140,7 @@ fun CityList(country: Country, onCitySelected: (City) -> Unit) {
         SearchBar(
             query = searchQuery,
             onQueryChange = { searchQuery = it },
-            placeholder = "Search City in ${country.name}..."
+            placeholder = stringResource(R.string.search_city)
         )
         
         if (isLoading) {
@@ -150,7 +153,7 @@ fun CityList(country: Country, onCitySelected: (City) -> Unit) {
                     Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.LightGray)
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        "No saved cities are available for ${country.name}. Start typing to search and cache results.",
+                        "No saved cities are available for ${country.name}.",
                         textAlign = TextAlign.Center,
                         color = Color.Gray
                     )
@@ -201,7 +204,7 @@ fun SummaryStep(
             }
         }
 
-        Text("Select Calculation Method", fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.calculation_method), fontWeight = FontWeight.SemiBold)
         CalculationMethodDropdown(selectedMethod = method, onMethodSelected = onMethodChange)
 
         Spacer(modifier = Modifier.weight(1f))
@@ -212,7 +215,47 @@ fun SummaryStep(
             colors = ButtonDefaults.buttonColors(containerColor = DeepTeal),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text("Add City", color = Color.White, modifier = Modifier.padding(8.dp))
+            Text(stringResource(R.string.confirm_add_location), color = Color.White, modifier = Modifier.padding(8.dp))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CalculationMethodDropdown(
+    selectedMethod: CalculationMethod,
+    onMethodSelected: (CalculationMethod) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val methods = PrayerCalculationMethod.entries
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = stringResource(methods.find { it.method == selectedMethod }?.nameResId ?: R.string.calc_method_moonsighting),
+            onValueChange = {},
+            readOnly = true,
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp)
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            methods.forEach { item ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(item.nameResId)) },
+                    onClick = {
+                        onMethodSelected(item.method)
+                        expanded = false
+                    }
+                )
+            }
         }
     }
 }

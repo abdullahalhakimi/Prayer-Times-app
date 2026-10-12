@@ -94,6 +94,19 @@ fun PrayersScreen(
     val locationsList by viewModel.locationsList.collectAsState()
     var showLocationSheet by remember { mutableStateOf(false) }
 
+    // Localize upcoming prayer name
+    val upcomingPrayerResId = when (upcomingPrayer.uppercase()) {
+        "FAJR" -> R.string.prayer_fajr
+        "SUNRISE" -> R.string.prayer_sunrise
+        "DHUHR" -> R.string.prayer_dhuhr
+        "ASR" -> R.string.prayer_asr
+        "MAGHRIB" -> R.string.prayer_maghrib
+        "ISHA" -> R.string.prayer_isha
+        "QIYAM" -> R.string.prayer_qiyam
+        else -> R.string.prayer_fajr
+    }
+    val upcomingPrayerDisplayName = stringResource(upcomingPrayerResId).uppercase()
+
     // Rotating pulse animation for sun/moon graphic
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val rotationAngle by infiniteTransition.animateFloat(
@@ -111,12 +124,12 @@ fun PrayersScreen(
             .fillMaxSize()
             .background(WarmCreame)
     ) {
-        // Top Section: Dark Teal Header
+        // Top Banner with gradient background
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1.2f)
-                .clip(shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+                .weight(1.8f)
+                .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp))
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(DeepTeal, Color(0xFF132F2F))
@@ -175,9 +188,9 @@ fun PrayersScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = upcomingPrayer,
+                            text = upcomingPrayerDisplayName,
                             color = Color.White,
-                            fontSize = 36.sp,
+                            fontSize = 32.sp,
                             fontWeight = FontWeight.Black,
                             letterSpacing = 1.sp
                         )
@@ -345,7 +358,7 @@ fun PrayersScreen(
                     .padding(bottom = 32.dp)
             ) {
                 Text(
-                    text = "Switch Location",
+                    text = stringResource(R.string.managed_locations_title),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = DeepTeal
@@ -396,7 +409,7 @@ fun PrayersScreen(
                     showLocationSheet = false
                     onNavigateToLocations()
                 }) {
-                    Text("Manage locations", color = DeepTeal)
+                    Text(stringResource(R.string.managed_locations_title), color = DeepTeal)
                 }
             }
         }
@@ -452,7 +465,7 @@ fun PrayerTimeItemRow(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = prayer.name,
+                            text = stringResource(prayer.nameResId),
                             color = DeepTeal,
                             fontSize = 16.sp,
                             fontWeight = if (isActive) FontWeight.ExtraBold else FontWeight.SemiBold

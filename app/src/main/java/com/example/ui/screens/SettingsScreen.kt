@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Public
@@ -79,7 +80,9 @@ fun SettingsScreen(
     val hijriDayOffset by viewModel.hijriDayOffset.collectAsState()
     val prePrayerReminderMinutes by viewModel.prePrayerReminderMinutes.collectAsState()
     val highLatitudeRule by viewModel.highLatitudeRule.collectAsState()
+    val appLanguage by viewModel.appLanguage.collectAsState()
 
+    var showLanguageDialog by remember { mutableStateOf(false) }
     var showMadhabDialog by remember { mutableStateOf(false) }
     var showHijriDialog by remember { mutableStateOf(false) }
     var showHighLatDialog by remember { mutableStateOf(false) }
@@ -142,14 +145,28 @@ fun SettingsScreen(
             SettingsItem(
                 icon = Icons.Default.LocationOn,
                 title = stringResource(R.string.managed_locations_title),
-                subtitle = if (currentLocationName.isNotEmpty()) "Active city: $currentLocationName" else stringResource(R.string.managed_locations_subtitle),
+                subtitle = if (currentLocationName.isNotEmpty()) stringResource(R.string.active_city_label, currentLocationName) else stringResource(R.string.managed_locations_subtitle),
                 onClick = onNavigateToLocations
+            )
+
+            // Language Selector Item
+            val languageValueLabel = when (appLanguage) {
+                "ar" -> stringResource(R.string.lang_arabic)
+                "en" -> stringResource(R.string.lang_english)
+                else -> stringResource(R.string.lang_system_default)
+            }
+            SettingsItemValue(
+                icon = Icons.Default.Language,
+                title = stringResource(R.string.language_settings_title),
+                subtitle = stringResource(R.string.language_settings_subtitle),
+                valueText = languageValueLabel,
+                onClick = { showLanguageDialog = true }
             )
 
             // --- SECTION 2: CALCULATION & FIQH ---
             SettingsSectionHeader(title = stringResource(R.string.fiqh_settings_header))
 
-            val madhabLabel = if (currentMadhab == Madhab.HANAFI) "Hanafi" else "Shafi / Standard"
+            val madhabLabel = stringResource(if (currentMadhab == Madhab.HANAFI) R.string.madhab_hanafi else R.string.madhab_standard)
             SettingsItemValue(
                 icon = Icons.Default.Book,
                 title = stringResource(R.string.madhab_title),
@@ -159,9 +176,9 @@ fun SettingsScreen(
             )
 
             val offsetLabel = when {
-                hijriDayOffset > 0 -> "+$hijriDayOffset ${if (hijriDayOffset == 1) "day" else "days"}"
-                hijriDayOffset < 0 -> "$hijriDayOffset ${if (hijriDayOffset == -1) "day" else "days"}"
-                else -> "Standard (0)"
+                hijriDayOffset > 0 -> "+$hijriDayOffset"
+                hijriDayOffset < 0 -> "$hijriDayOffset"
+                else -> "0"
             }
             SettingsItemValue(
                 icon = Icons.Default.CalendarMonth,
@@ -175,7 +192,7 @@ fun SettingsScreen(
                 icon = Icons.Default.Public,
                 title = stringResource(R.string.high_latitude_title),
                 subtitle = stringResource(R.string.high_latitude_subtitle),
-                valueText = highLatitudeRule.displayName,
+                valueText = stringResource(highLatitudeRule.nameResId),
                 onClick = { showHighLatDialog = true }
             )
 
@@ -193,7 +210,7 @@ fun SettingsScreen(
             // --- SECTION 4: NOTIFICATIONS & REMINDERS ---
             SettingsSectionHeader(title = stringResource(R.string.notification_settings_header))
 
-            val reminderLabel = if (prePrayerReminderMinutes == 0) "Disabled" else "$prePrayerReminderMinutes mins before"
+            val reminderLabel = if (prePrayerReminderMinutes == 0) stringResource(R.string.notification_silent) else "$prePrayerReminderMinutes mins"
             SettingsItemValue(
                 icon = Icons.Default.NotificationsActive,
                 title = stringResource(R.string.pre_prayer_warning_title),
@@ -225,15 +242,60 @@ fun SettingsScreen(
 
     // --- DIALOGS ---
 
-    if (showMadhabDialog) {
+    if (showLanguageDialog) {
         AlertDialog(
-            onDismissRequest = { showMadhabDialog = false },
-            title = { Text("Select Asr Madhab", fontWeight = FontWeight.Bold, color = DeepTeal) },
+            onDismissRequest = { showLanguageDialog = false },
+            title = { Text(stringResource(R.string.language_settings_title), fontWeight = FontWeight.Bold, color = DeepTeal) },
             text = {
                 Column {
                     listOf(
-                        Madhab.SHAFI to "Shafi, Maliki, Hanbali (Standard 1x shadow)",
-                        Madhab.HANAFI to "Hanafi (2x shadow length)"
+                        "system" to stringResource(R.string.lang_system_default),
+                        "en" to stringResource(R.string.lang_english),
+                        "ar" to stringResource(R.string.lang_arabic)
+                    ).forEach { (code, label) ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .selectable(
+                                    selected = (appLanguage == code),
+                                    onClick = {
+                                        viewModel.setAppLanguage(code)
+                                        showLanguageDialog = false
+                                    }
+                                )
+                                .padding(vertical = 12.dp)
+                        ) {
+                            RadioButton(
+                                selected = (appLanguage == code),
+                                onClick = {
+                                    viewModel.setAppLanguage(code)
+                                    showLanguageDialog = false
+                                }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = label, fontSize = 14.sp, color = Color.DarkGray)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showLanguageDialog = false }) {
+                    Text(stringResource(R.string.cancel), color = DeepTeal, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
+    }
+
+    if (showMadhabDialog) {
+        AlertDialog(
+            onDismissRequest = { showMadhabDialog = false },
+            title = { Text(stringResource(R.string.madhab_title), fontWeight = FontWeight.Bold, color = DeepTeal) },
+            text = {
+                Column {
+                    listOf(
+                        Madhab.SHAFI to stringResource(R.string.madhab_standard),
+                        Madhab.HANAFI to stringResource(R.string.madhab_hanafi)
                     ).forEach { (madhabOption, label) ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -263,7 +325,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showMadhabDialog = false }) {
-                    Text("Close", color = DeepTeal, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.cancel), color = DeepTeal, fontWeight = FontWeight.Bold)
                 }
             }
         )
@@ -272,16 +334,16 @@ fun SettingsScreen(
     if (showHijriDialog) {
         AlertDialog(
             onDismissRequest = { showHijriDialog = false },
-            title = { Text("Hijri Date Correction", fontWeight = FontWeight.Bold, color = DeepTeal) },
+            title = { Text(stringResource(R.string.hijri_offset_title), fontWeight = FontWeight.Bold, color = DeepTeal) },
             text = {
                 Column {
-                    Text("Adjust Hijri calendar by ± days to align with local moon sighting:", fontSize = 12.sp, color = Color.Gray)
+                    Text(stringResource(R.string.offset_note), fontSize = 12.sp, color = Color.Gray)
                     Spacer(modifier = Modifier.height(8.dp))
                     listOf(-2, -1, 0, 1, 2).forEach { offset ->
                         val label = when {
-                            offset > 0 -> "+$offset ${if (offset == 1) "day" else "days"}"
-                            offset < 0 -> "$offset ${if (offset == -1) "day" else "days"}"
-                            else -> "0 (Default standard)"
+                            offset > 0 -> "+$offset"
+                            offset < 0 -> "$offset"
+                            else -> "0"
                         }
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -311,7 +373,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showHijriDialog = false }) {
-                    Text("Cancel", color = DeepTeal, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.cancel), color = DeepTeal, fontWeight = FontWeight.Bold)
                 }
             }
         )
@@ -320,7 +382,7 @@ fun SettingsScreen(
     if (showHighLatDialog) {
         AlertDialog(
             onDismissRequest = { showHighLatDialog = false },
-            title = { Text("High Latitude Rule", fontWeight = FontWeight.Bold, color = DeepTeal) },
+            title = { Text(stringResource(R.string.high_latitude_title), fontWeight = FontWeight.Bold, color = DeepTeal) },
             text = {
                 Column {
                     AppHighLatitudeRule.entries.forEach { rule ->
@@ -345,14 +407,14 @@ fun SettingsScreen(
                                 }
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = rule.displayName, fontSize = 14.sp, color = Color.DarkGray)
+                            Text(text = stringResource(rule.nameResId), fontSize = 14.sp, color = Color.DarkGray)
                         }
                     }
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showHighLatDialog = false }) {
-                    Text("Close", color = DeepTeal, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.cancel), color = DeepTeal, fontWeight = FontWeight.Bold)
                 }
             }
         )
@@ -361,10 +423,15 @@ fun SettingsScreen(
     if (showPrePrayerDialog) {
         AlertDialog(
             onDismissRequest = { showPrePrayerDialog = false },
-            title = { Text("Pre-Adhan Warning Alert", fontWeight = FontWeight.Bold, color = DeepTeal) },
+            title = { Text(stringResource(R.string.pre_prayer_warning_title), fontWeight = FontWeight.Bold, color = DeepTeal) },
             text = {
                 Column {
-                    listOf(0 to "Disabled", 5 to "5 minutes before", 10 to "10 minutes before", 15 to "15 minutes before").forEach { (mins, label) ->
+                    listOf(
+                        0 to stringResource(R.string.notification_silent),
+                        5 to "5 mins",
+                        10 to "10 mins",
+                        15 to "15 mins"
+                    ).forEach { (mins, label) ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
@@ -393,7 +460,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showPrePrayerDialog = false }) {
-                    Text("Close", color = DeepTeal, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.cancel), color = DeepTeal, fontWeight = FontWeight.Bold)
                 }
             }
         )
@@ -402,20 +469,20 @@ fun SettingsScreen(
     if (showAboutDialog) {
         AlertDialog(
             onDismissRequest = { showAboutDialog = false },
-            title = { Text("About Prayer Times", fontWeight = FontWeight.Bold, color = DeepTeal) },
+            title = { Text(stringResource(R.string.about_app_title), fontWeight = FontWeight.Bold, color = DeepTeal) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Prayer Times App v1.0.0", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(stringResource(R.string.app_name) + " v1.0.0", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     Text("Built with Kotlin, Jetpack Compose, and Material 3.", fontSize = 13.sp, color = Color.Gray)
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                    Text("Calculation Engines:", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = DeepTeal)
-                    Text("• Batoul Apps Adhan Engine (Offline high-precision calculation)", fontSize = 12.sp, color = Color.DarkGray)
-                    Text("• Aladhan REST API (Online synchronized monthly calendar)", fontSize = 12.sp, color = Color.DarkGray)
+                    Text(stringResource(R.string.calculation_method) + ":", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = DeepTeal)
+                    Text("• Batoul Apps Adhan Engine", fontSize = 12.sp, color = Color.DarkGray)
+                    Text("• Aladhan REST API", fontSize = 12.sp, color = Color.DarkGray)
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showAboutDialog = false }) {
-                    Text("OK", color = DeepTeal, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.confirm), color = DeepTeal, fontWeight = FontWeight.Bold)
                 }
             }
         )
@@ -424,41 +491,19 @@ fun SettingsScreen(
     if (showPrivacyDialog) {
         AlertDialog(
             onDismissRequest = { showPrivacyDialog = false },
-            title = { Text("Privacy Policy", fontWeight = FontWeight.Bold, color = DeepTeal) },
+            title = { Text(stringResource(R.string.privacy_policy_title), fontWeight = FontWeight.Bold, color = DeepTeal) },
             text = {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.verticalScroll(rememberScrollState())
                 ) {
-                    Text("Your Privacy Matters", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = DeepTeal)
-                    Text("Prayer Times is designed with privacy at its core. We do NOT collect personal information, sell user data, or run third-party advertising trackers.", fontSize = 12.sp, color = Color.DarkGray)
-                    
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                    
-                    Text("Data & Permissions Usage:", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = DeepTeal)
-                    Text("• Location: Used locally to calculate daily prayer times and Qibla direction for your position.", fontSize = 12.sp, color = Color.DarkGray)
-                    Text("• Notifications & Alarms: Used to deliver pre-Adhan warning alerts and Suhoor alarms.", fontSize = 12.sp, color = Color.DarkGray)
-                    Text("• Storage: Selected cities and preferences are stored locally on your device.", fontSize = 12.sp, color = Color.DarkGray)
-                    
-                    Spacer(modifier = Modifier.height(4.dp))
-                    
-                    Text("Website / Full Online Policy:", fontSize = 11.sp, color = Color.Gray)
-                    Text("https://abdullahalhakimi.github.io/prayer-times-app/privacy_policy.html", fontSize = 12.sp, color = AmberAccent, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    showPrivacyDialog = false
-                    try {
-                        uriHandler.openUri("https://abdullahalhakimi.github.io/prayer-times-app/privacy_policy.html")
-                    } catch (_: Exception) {}
-                }) {
-                    Text("Open Web Page", color = AmberAccent, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.privacy_policy_title), fontWeight = FontWeight.Bold, fontSize = 14.sp, color = DeepTeal)
+                    Text(stringResource(R.string.privacy_policy_subtitle), fontSize = 12.sp, color = Color.DarkGray)
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showPrivacyDialog = false }) {
-                    Text("Close", color = DeepTeal, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.cancel), color = DeepTeal, fontWeight = FontWeight.Bold)
                 }
             }
         )
