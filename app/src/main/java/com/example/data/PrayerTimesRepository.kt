@@ -96,10 +96,10 @@ class PrayerTimesRepository private constructor(context: Context) {
                 school = madhab.aladhanSchool
             )
             val response = apiResponse.data
-            prefs.edit()
-                .putString(cacheKey, dailyAdapter.toJson(response))
-                .putLong(cacheKey + "_ts", System.currentTimeMillis())
-                .apply()
+            prefs.edit {
+                putString(cacheKey, dailyAdapter.toJson(response))
+                    .putLong(cacheKey + "_ts", System.currentTimeMillis())
+            }
             FetchResult.Success(
                 items = toPrayerTimeItems(response.timings, date, is24HourFormat),
                 source = Source.NETWORK,
@@ -164,15 +164,15 @@ class PrayerTimesRepository private constructor(context: Context) {
                 school = madhab.aladhanSchool
             )
             val response = apiResponse.data
-            val list = response.hijri.orEmpty().map { entry ->
+            val list = response.orEmpty().map { entry ->
                 DailyTimings(
                     date = entry.date.gregorian.date.orEmpty(),
-                    fajr = entry.timings.fajr,
-                    sunrise = entry.timings.sunrise,
-                    dhuhr = entry.timings.dhuhr,
-                    asr = entry.timings.asr,
-                    maghrib = entry.timings.maghrib,
-                    isha = entry.timings.isha
+                    fajr = entry.timings.fajr.substringBefore(' '),
+                    sunrise = entry.timings.sunrise.substringBefore(' '),
+                    dhuhr = entry.timings.dhuhr.substringBefore(' '),
+                    asr = entry.timings.asr.substringBefore(' '),
+                    maghrib = entry.timings.maghrib.substringBefore(' '),
+                    isha = entry.timings.isha.substringBefore(' ')
                 )
             }
             prefs.edit { putString(key, monthlyAdapter.toJson(list)) }
@@ -251,10 +251,10 @@ class PrayerTimesRepository private constructor(context: Context) {
     private fun formatHijriFromApi(date: com.prayertimesApp.data.api.AladhanDate): String? {
         return try {
             val hijri = date.hijri
-            val day = hijri.day
+            val day = hijri.day.orEmpty()
             val month = hijri.month.en
-            val year = hijri.year
-            "$day $month $year AH"
+            val year = hijri.year.orEmpty()
+            "$day $month $year AH".trim()
         } catch (_: Exception) {
             null
         }
