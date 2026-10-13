@@ -12,7 +12,7 @@
     <string name="setting_notes_description">ملاحظات الإعدادات</string>
     <string name="settings_header_note">خصص تجربة مواقيت الصلاة وادر طرق الحساب الخاصة بكل مدينة.</string>
     <string name="general_settings_header">إعدادات عامة</string>
-    <string name="managed_locations_title">المواقع المدارة</string>
+    <string name="managed_locations_title">المواقع المحددة</string>
     <string name="managed_locations_subtitle">إضافة أو حذف أو التبديل بين المدن</string>
     <string name="screen_prayers">الصلوات</string>
     <string name="screen_qibla">القبلة</string>

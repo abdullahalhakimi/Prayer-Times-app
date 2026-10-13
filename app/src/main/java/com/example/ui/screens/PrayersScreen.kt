@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledIconButton
@@ -44,6 +45,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -303,7 +305,8 @@ fun PrayersScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(prayerTimes) { prayer ->
-                        val notificationType = notificationSettings[prayer.name] ?: NotificationType.SILENT
+                        val notificationType =
+                            notificationSettings[prayer.name] ?: NotificationType.SILENT
                         val isActive = upcomingPrayer == prayer.name.uppercase()
 
                         PrayerTimeItemRow(
@@ -405,11 +408,16 @@ fun PrayersScreen(
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
-                TextButton(onClick = {
-                    showLocationSheet = false
-                    onNavigateToLocations()
-                }) {
-                    Text(stringResource(R.string.managed_locations_title), color = DeepTeal)
+                OutlinedButton(
+                    onClick = {
+                        showLocationSheet = false
+                        onNavigateToLocations()
+                    }
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.add_city_title),
+                        color = DeepTeal,
+                    )
                 }
             }
         }
@@ -520,7 +528,7 @@ fun PrayerTimeItemRow(
                     NotificationType.BEEP -> Icons.Default.Notifications
                     NotificationType.ADHAN -> Icons.Default.NotificationsActive
                 }
-                
+
                 val tintColor = when (notificationType) {
                     NotificationType.SILENT -> Color.Gray
                     NotificationType.BEEP -> AmberAccent
