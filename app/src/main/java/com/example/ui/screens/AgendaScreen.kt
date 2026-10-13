@@ -48,6 +48,7 @@ fun AgendaScreen(
             )
         },
         containerColor = WarmCreame,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier = modifier
     ) { innerPadding ->
         Column(
