@@ -17,9 +17,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.prayertimesApp.R
 import com.prayertimesApp.data.AgendaReminder
 import com.prayertimesApp.data.PrayerTimeItem
 import com.prayertimesApp.ui.PrayerTimesViewModel
@@ -41,11 +43,12 @@ fun AgendaScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Agenda & Alarms", fontWeight = FontWeight.Bold, color = Color.White) },
+                title = { Text(stringResource(R.string.agenda_title), fontWeight = FontWeight.Bold, color = Color.White) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = DeepTeal)
             )
         },
         containerColor = WarmCreame,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         modifier = modifier
     ) { innerPadding ->
         Column(
@@ -77,7 +80,7 @@ fun AgendaScreen(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Programmatic alarms invoke AlarmManager's exact background loops to trigger even while your device is sleeping or idle.",
+                        text = stringResource(R.string.agenda_info_text),
                         fontSize = 12.sp,
                         color = Color(0xFF444444),
                         lineHeight = 16.sp
@@ -86,7 +89,7 @@ fun AgendaScreen(
             }
 
             Text(
-                text = "ACTIVE ALARMS & VOLUNTARY SCHEDULES",
+                text = stringResource(R.string.active_alarms_header),
                 fontSize = 12.sp,
                 color = Color.Gray,
                 fontWeight = FontWeight.Bold,
@@ -122,6 +125,22 @@ fun AgendaReminderRow(
     formattedExecutionTime: String,
     onToggle: () -> Unit
 ) {
+    val localizedTitle = when (reminder.id) {
+        "r1" -> stringResource(R.string.suhoor_alarm)
+        "r2" -> stringResource(R.string.pre_fajr_reminder)
+        "r3" -> stringResource(R.string.duha_prayer)
+        "r4" -> stringResource(R.string.night_qiyam)
+        else -> reminder.title
+    }
+
+    val localizedSub = when (reminder.id) {
+        "r1" -> stringResource(R.string.suhoor_alarm_sub)
+        "r2" -> stringResource(R.string.pre_fajr_sub)
+        "r3" -> stringResource(R.string.duha_sub)
+        "r4" -> stringResource(R.string.night_qiyam_sub)
+        else -> reminder.description
+    }
+
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -164,24 +183,33 @@ fun AgendaReminderRow(
 
                 Column {
                     Text(
-                        text = reminder.title,
+                        text = localizedTitle,
                         color = Color(0xFF222222),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = reminder.description,
+                        text = localizedSub,
                         color = Color.Gray,
                         fontSize = 11.sp
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     
-                    // Display execution trigger context e.g. 40 minutes before Fajr
                     val relativeMinutesAbs = Math.abs(reminder.relativeMinutes)
-                    val relWord = if (reminder.relativeMinutes < 0) "before" else "after"
+                    val basePrayerResId = when (reminder.basePrayerName.uppercase()) {
+                        "FAJR" -> R.string.prayer_fajr
+                        "SUNRISE" -> R.string.prayer_sunrise
+                        "DHUHR" -> R.string.prayer_dhuhr
+                        "ASR" -> R.string.prayer_asr
+                        "MAGHRIB" -> R.string.prayer_maghrib
+                        "ISHA" -> R.string.prayer_isha
+                        "QIYAM" -> R.string.prayer_qiyam
+                        else -> R.string.prayer_fajr
+                    }
+                    val prayerNameStr = stringResource(basePrayerResId)
                     Text(
-                        text = "$relativeMinutesAbs min $relWord ${reminder.basePrayerName}",
+                        text = "$relativeMinutesAbs min $prayerNameStr",
                         color = DeepTeal,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold

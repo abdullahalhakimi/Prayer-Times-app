@@ -1,24 +1,30 @@
 package com.prayertimesApp.data
 
+import androidx.annotation.StringRes
 import com.batoulapps.adhan.Coordinates
 import com.batoulapps.adhan.CalculationMethod
 import com.batoulapps.adhan.Madhab
 import com.batoulapps.adhan.PrayerTimes
 import com.batoulapps.adhan.data.DateComponents
+import com.prayertimesApp.R
 import java.util.Calendar
 import java.util.Date
 
-enum class PrayerCalculationMethod(val displayName: String, val method: CalculationMethod) {
-    UMM_AL_QURA("Umm Al-Qura", CalculationMethod.UMM_AL_QURA),
-    MUSLIM_WORLD_LEAGUE("Muslim World League", CalculationMethod.MUSLIM_WORLD_LEAGUE),
-    EGYPTIAN("Egyptian General Authority", CalculationMethod.EGYPTIAN),
-    KARACHI("Univ. of Islamic Sciences, Karachi", CalculationMethod.KARACHI),
-    NORTH_AMERICA("ISNA (North America)", CalculationMethod.NORTH_AMERICA),
-    MOONSIGHTING_COMMITTEE("Moonsighting Committee", CalculationMethod.MOONSIGHTING_COMMITTEE),
-    KUWAIT("Kuwait", CalculationMethod.KUWAIT),
-    QATAR("Qatar", CalculationMethod.QATAR),
-    SINGAPORE("Singapore", CalculationMethod.SINGAPORE),
-    TURKEY("Turkey", CalculationMethod.TURKEY);
+enum class PrayerCalculationMethod(
+    val displayName: String,
+    val method: CalculationMethod,
+    @StringRes val nameResId: Int
+) {
+    UMM_AL_QURA("Umm Al-Qura", CalculationMethod.UMM_AL_QURA, R.string.calc_method_umm_al_qura),
+    MUSLIM_WORLD_LEAGUE("Muslim World League", CalculationMethod.MUSLIM_WORLD_LEAGUE, R.string.calc_method_mwl),
+    EGYPTIAN("Egyptian General Authority", CalculationMethod.EGYPTIAN, R.string.calc_method_egyptian),
+    KARACHI("Univ. of Islamic Sciences, Karachi", CalculationMethod.KARACHI, R.string.calc_method_karachi),
+    NORTH_AMERICA("ISNA (North America)", CalculationMethod.NORTH_AMERICA, R.string.calc_method_isna),
+    MOONSIGHTING_COMMITTEE("Moonsighting Committee", CalculationMethod.MOONSIGHTING_COMMITTEE, R.string.calc_method_moonsighting),
+    KUWAIT("Kuwait", CalculationMethod.KUWAIT, R.string.calc_method_kuwait),
+    QATAR("Qatar", CalculationMethod.QATAR, R.string.calc_method_qatar),
+    SINGAPORE("Singapore", CalculationMethod.SINGAPORE, R.string.calc_method_singapore),
+    TURKEY("Turkey", CalculationMethod.TURKEY, R.string.calc_method_turkey);
 
     /**
      * Aladhan API calculation method id.
@@ -39,9 +45,13 @@ enum class PrayerCalculationMethod(val displayName: String, val method: Calculat
         }
 }
 
-enum class PrayerMadhab(val displayName: String, val madhab: Madhab) {
-    STANDARD("Shafi, Maliki, Hanbali (Standard)", Madhab.SHAFI),
-    HANAFI("Hanafi", Madhab.HANAFI);
+enum class PrayerMadhab(
+    val displayName: String,
+    val madhab: Madhab,
+    @StringRes val nameResId: Int
+) {
+    STANDARD("Shafi, Maliki, Hanbali (Standard)", Madhab.SHAFI, R.string.madhab_standard),
+    HANAFI("Hanafi", Madhab.HANAFI, R.string.madhab_hanafi);
 
     /** Aladhan school id: 0 = Shafi, 1 = Hanafi. */
     val aladhanSchool: Int
@@ -51,22 +61,35 @@ enum class PrayerMadhab(val displayName: String, val madhab: Madhab) {
         }
 }
 
-enum class AppHighLatitudeRule(val displayName: String) {
-    MIDDLE_OF_THE_NIGHT("Middle of the Night"),
-    SEVENTH_OF_THE_NIGHT("Seventh of the Night"),
-    TWILIGHT_ANGLE("Twilight Angle")
+enum class AppHighLatitudeRule(
+    val displayName: String,
+    @StringRes val nameResId: Int
+) {
+    MIDDLE_OF_THE_NIGHT("Middle of the Night", R.string.high_lat_middle_night),
+    SEVENTH_OF_THE_NIGHT("Seventh of the Night", R.string.high_lat_seventh_night),
+    TWILIGHT_ANGLE("Twilight Angle", R.string.high_lat_twilight_angle)
 }
 
 data class PrayerTimeItem(
     val name: String,
     val date: Date,
-    val formattedTime: String
+    val formattedTime: String,
+    @StringRes val nameResId: Int = when (name) {
+        "Fajr" -> R.string.prayer_fajr
+        "Sunrise" -> R.string.prayer_sunrise
+        "Dhuhr" -> R.string.prayer_dhuhr
+        "Asr" -> R.string.prayer_asr
+        "Maghrib" -> R.string.prayer_maghrib
+        "Isha" -> R.string.prayer_isha
+        "Qiyam" -> R.string.prayer_qiyam
+        else -> R.string.prayer_fajr
+    }
 )
 
 object PrayerTimesCalculator {
 
     /**
-     * Calculates prayer times for a specific coordinates, calculation method, madhab, and date.
+     * Calculates prayer times for specific coordinates, calculation method, madhab, and date.
      */
     fun calculateTimes(
         latitude: Double,
@@ -119,15 +142,14 @@ object PrayerTimesCalculator {
         val df = java.text.SimpleDateFormat(timePattern, java.util.Locale.getDefault())
 
         val list = mutableListOf<PrayerTimeItem>()
-        prayerTimes.fajr()?.let { list.add(PrayerTimeItem("Fajr", it, df.format(it))) }
-        prayerTimes.sunrise()?.let { list.add(PrayerTimeItem("Sunrise", it, df.format(it))) }
-        prayerTimes.dhuhr()?.let { list.add(PrayerTimeItem("Dhuhr", it, df.format(it))) }
-        prayerTimes.asr()?.let { list.add(PrayerTimeItem("Asr", it, df.format(it))) }
-        prayerTimes.maghrib()?.let { list.add(PrayerTimeItem("Maghrib", it, df.format(it))) }
-        prayerTimes.isha()?.let { list.add(PrayerTimeItem("Isha", it, df.format(it))) }
-        list.add(PrayerTimeItem("Qiyam", qiyamTime, df.format(qiyamTime)))
+        prayerTimes.fajr()?.let { list.add(PrayerTimeItem("Fajr", it, df.format(it), R.string.prayer_fajr)) }
+        prayerTimes.sunrise()?.let { list.add(PrayerTimeItem("Sunrise", it, df.format(it), R.string.prayer_sunrise)) }
+        prayerTimes.dhuhr()?.let { list.add(PrayerTimeItem("Dhuhr", it, df.format(it), R.string.prayer_dhuhr)) }
+        prayerTimes.asr()?.let { list.add(PrayerTimeItem("Asr", it, df.format(it), R.string.prayer_asr)) }
+        prayerTimes.maghrib()?.let { list.add(PrayerTimeItem("Maghrib", it, df.format(it), R.string.prayer_maghrib)) }
+        prayerTimes.isha()?.let { list.add(PrayerTimeItem("Isha", it, df.format(it), R.string.prayer_isha)) }
+        list.add(PrayerTimeItem("Qiyam", qiyamTime, df.format(qiyamTime), R.string.prayer_qiyam))
 
         return list
     }
 }
-
