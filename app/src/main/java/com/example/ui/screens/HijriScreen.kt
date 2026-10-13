@@ -289,20 +289,20 @@ fun HijriScreen(
                                         color = if (isSelected) Color.Transparent else Color.LightGray.copy(alpha = 0.4f),
                                         shape = RoundedCornerShape(8.dp)
                                     )
-                                    .padding(4.dp),
+                                    .padding(horizontal = 4.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text(
                                         text = "$dayNum",
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp,
+                                        fontSize = 13.sp,
                                         color = if (isSelected) Color.White else Color(0xFF333333)
                                     )
-                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Spacer(modifier = Modifier.height(1.dp))
                                     Text(
                                         text = "$hijriDay",
-                                        fontSize = 9.sp,
+                                        fontSize = 10.sp,
                                         fontWeight = FontWeight.SemiBold,
                                         color = if (isSelected) AmberAccent else DeepTeal
                                     )
